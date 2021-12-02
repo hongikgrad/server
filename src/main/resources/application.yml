@@ -1,11 +1,5 @@
 server:
   port: 8080
-  ssl:
-    enabled: true
-    key-store: ${KEY}
-    key-store-password: ${KEY_PASSWORD}
-    key-store-type: ${KEY_TYPE}
-    key-alias: ${KEY_ALIAS}
 
 
 spring:
