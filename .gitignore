@@ -42,3 +42,6 @@ out/
 
 ### Dev ###
 docker-compose.yml
+
+### local ssl key ###
+*.p12
