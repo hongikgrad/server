@@ -16,6 +16,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins("https://localhost:8080")
                 .allowedOrigins("http://localhost:3000")
                 .allowedOrigins("https://localhost:3000")
+                .allowedOrigins("http://hongik-grad.cf")
+                .allowedOrigins("https://hongik-grad.cf")
                 .allowCredentials(true)
                 .allowedMethods("*")
                 .allowedHeaders("*");
