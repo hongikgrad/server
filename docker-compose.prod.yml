@@ -23,7 +23,7 @@ services:
     volumes:
       - static:/home/app/web/static
       - media:/home/app/web/media
-      - /etc/letsencrypt/archive/hongik-grad.cf:/etc/nginx/conf.d/certificate
+      - /etc/letsencrypt/archive/api.hongik-grad.cf:/etc/nginx/conf.d/certificate
     ports:
       - "80:80"
       - "443:443"
