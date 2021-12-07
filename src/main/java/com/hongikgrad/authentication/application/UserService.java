@@ -23,13 +23,16 @@ public class UserService {
         );
 
         Map<String, String> userAuthCookie = userCookieCrawler.getUserAuthCookie(loginInfo);
-        getUserCookieResponse(userAuthCookie, response);
+        setUserCookieResponse(userAuthCookie, response);
     }
 
-    private void getUserCookieResponse(Map<String, String> userAuthCookie, HttpServletResponse response) {
+    private void setUserCookieResponse(Map<String, String> userAuthCookie, HttpServletResponse response) {
         userAuthCookie.forEach((key, value) -> {
             Cookie cookie = new Cookie(key, value);
             cookie.setMaxAge(60*60*24);
+            cookie.setSecure(true);
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
             response.addCookie(cookie);
         });
     }
