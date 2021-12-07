@@ -1,10 +1,10 @@
-package com.hongikgrad.dto;
+package com.hongikgrad.authentication.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 @Getter
-public class LoginDto {
+public class LoginRequestDto {
 
     @JsonProperty("USER_ID")
     private String id;
@@ -12,10 +12,10 @@ public class LoginDto {
     @JsonProperty("PASSWD")
     private String pw;
 
-    public LoginDto() {
+    public LoginRequestDto() {
     }
 
-    public LoginDto(String id, String pw) {
+    public LoginRequestDto(String id, String pw) {
         this.id = id;
         this.pw = pw;
     }

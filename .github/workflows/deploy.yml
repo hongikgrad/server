@@ -1,9 +1,5 @@
 name: Deploy to EC2
-on:
-  push:
-    branches:
-      - master
-      - develop
+on: [push]
 
 jobs:
 
