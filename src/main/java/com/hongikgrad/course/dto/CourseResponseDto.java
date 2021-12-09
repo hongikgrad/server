@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CourseResponseDto {
     private String name;
-    private String credit;
+    private int credit;
     private String number;
 }

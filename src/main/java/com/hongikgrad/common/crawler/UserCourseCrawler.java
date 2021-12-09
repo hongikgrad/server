@@ -1,6 +1,6 @@
-package com.hongikgrad.graduation.application;
+package com.hongikgrad.crawler;
 
-import com.hongikgrad.common.Crawler;
+import com.hongikgrad.crawler.Crawler;
 import com.hongikgrad.graduation.dto.CourseResponseDto;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class CourseCrawler extends Crawler {
+public class UserCourseCrawler extends Crawler {
     String TAKEN_COURSE_URL = "https://cn.hongik.ac.kr/stud/P/01000/01000.jsp";
 
     public List<CourseResponseDto> getUserTakenCoursesFromClassnet(HttpServletRequest request) throws IOException {

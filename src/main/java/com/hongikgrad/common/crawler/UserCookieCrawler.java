@@ -1,14 +1,11 @@
-package com.hongikgrad.authentication.application;
+package com.hongikgrad.crawler;
 
-import com.hongikgrad.common.Crawler;
+import com.hongikgrad.crawler.Crawler;
 import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
 
 import javax.naming.AuthenticationException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;

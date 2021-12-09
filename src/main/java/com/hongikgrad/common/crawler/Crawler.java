@@ -1,4 +1,4 @@
-package com.hongikgrad.common;
+package com.hongikgrad.crawler;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
