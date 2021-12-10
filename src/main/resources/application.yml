@@ -27,10 +27,10 @@ spring:
   jpa:
     database: mysql
     database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
-    generate-ddl: true
-    show-sql: true
+    generate-ddl: false
+    show-sql: false
     properties.hibernate.format_sql: true
-    hibernate.ddl-auto: create
+    hibernate.ddl-auto: validate
 
 server:
   ssl:
