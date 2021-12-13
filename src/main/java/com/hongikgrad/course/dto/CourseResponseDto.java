@@ -1,11 +1,10 @@
-package com.hongikgrad.graduation.dto;
+package com.hongikgrad.course.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
 @AllArgsConstructor
 public class CourseResponseDto {
     private String name;
