@@ -46,5 +46,4 @@ public class HongikGradApplication {
 	JPAQueryFactory jpaQueryFactory(EntityManager em) {
 		return new JPAQueryFactory(em);
 	}
-
 }
