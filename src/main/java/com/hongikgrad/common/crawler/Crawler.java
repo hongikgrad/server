@@ -1,4 +1,4 @@
-package com.hongikgrad.crawler;
+package com.hongikgrad.common.crawler;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -15,22 +15,19 @@ public class Crawler {
     String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36";
 
     private Connection.Response getResponseByJsoup(String url, Map<String, String> cookies, Map<String, String> headers, Map<String, String> data, Connection.Method method) {
-        Connection conn = Jsoup.connect(url)
-                .timeout(3000)
-                .userAgent(USER_AGENT)
-                .headers(headers)
-                .method(method);
-        if (cookies != null) conn.cookies(cookies);
-        if (data != null) conn.data(data);
-
-        Connection.Response response = null;
         try {
-            response = conn.execute();
+            Connection conn = Jsoup.connect(url)
+                    .timeout(1000*20)
+                    .userAgent(USER_AGENT)
+                    .headers(headers)
+                    .method(method);
+            if (cookies != null) conn.cookies(cookies);
+            if (data != null) conn.data(data);
+            return conn.execute();
         } catch (NullPointerException | IOException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
+            return null;
         }
-
-        return response;
     }
 
     protected Map<String, String> getHeaders() {
@@ -56,16 +53,15 @@ public class Crawler {
     }
 
     public Map<String, String> extractCookie(HttpServletRequest request) {
-        Map<String, String> cookies = new HashMap<>();
-        System.out.println("request = " + request);
-        Cookie[] cookieArray = request.getCookies();
+        Map<String, String> extractedCookies = new HashMap<>();
+        Cookie[] requestCookies = request.getCookies();
 
-        for (Cookie cookie : cookieArray) {
+        for (Cookie cookie : requestCookies) {
             if (cookie == null) break;
-            cookies.put(cookie.getName(), cookie.getValue());
+            extractedCookies.put(cookie.getName(), cookie.getValue());
         }
 
-        return cookies;
+        return extractedCookies;
     }
 
     public Map<String, String> getCookieFromJsoupResponse(String url, Map<String, String> cookies, Map<String, String> headers, Map<String, String> data, Connection.Method method) throws IOException {

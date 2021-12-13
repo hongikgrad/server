@@ -1,6 +1,5 @@
-package com.hongikgrad.crawler;
+package com.hongikgrad.common.crawler;
 
-import com.hongikgrad.crawler.Crawler;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
@@ -11,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-// component?
 @Component
 public class UserCookieCrawler extends Crawler {
 
@@ -19,9 +17,9 @@ public class UserCookieCrawler extends Crawler {
     String CLASSNET_BASE_URL = "https://cn.hongik.ac.kr";
     String CLASSNET_MAIN_URL = CLASSNET_BASE_URL + "/stud";
 
-    public Map<String, String> getUserAuthCookie(Map<String ,String> loginInfo) throws IOException, AuthenticationException {
+    public Map<String, String> getUserAuthCookie(Map<String ,String> loginData) throws IOException, AuthenticationException {
 
-        Map<String, String> execPageCookie = getUserAuthCookieFromExecPage(loginInfo);
+        Map<String, String> execPageCookie = getUserAuthCookieFromExecPage(loginData);
 
         Map<String, String> userAuthCookie = new HashMap<>(execPageCookie);
 
@@ -44,7 +42,6 @@ public class UserCookieCrawler extends Crawler {
 
     private Map<String, String> getUserAuthCookieFromExecPage(Map<String, String> loginInfo) throws IOException, AuthenticationException {
         Document loginExecPage = getJsoupResponseDocument(LOGIN_EXEC_URL, null, getHeaders(), loginInfo, Connection.Method.POST);
-        System.out.println("loginExecPage.html( = " + loginExecPage.html());
         Map<String, String> userAuthCookie = parseUserAuthCookie(loginExecPage);
         validateCookie(userAuthCookie);
         return userAuthCookie;
