@@ -12,6 +12,7 @@ import javax.naming.AuthenticationException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
@@ -28,7 +29,6 @@ public class UserService {
                 "USER_ID", loginDto.getId(),
                 "PASSWD", loginDto.getPw()
         );
-
         Map<String, String> userAuthCookie = userCookieCrawler.getUserAuthCookie(loginData);
         String studentId = sha256.hash(loginDto.getId());
         setUserAuthCookie(userAuthCookie, response);
