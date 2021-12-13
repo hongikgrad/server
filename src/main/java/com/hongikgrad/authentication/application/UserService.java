@@ -1,10 +1,12 @@
 package com.hongikgrad.authentication.application;
 
 import com.hongikgrad.authentication.dto.LoginRequestDto;
+
 import com.hongikgrad.authentication.entity.User;
 import com.hongikgrad.authentication.repository.UserRepository;
 import com.hongikgrad.common.crawler.UserCookieCrawler;
 import com.hongikgrad.common.hash.SHA256;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,7 @@ import javax.naming.AuthenticationException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
