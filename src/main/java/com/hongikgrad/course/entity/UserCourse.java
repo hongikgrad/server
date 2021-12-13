@@ -1,4 +1,4 @@
-package com.hongikgrad.graduation.entity;
+package com.hongikgrad.course.entity;
 
 import com.hongikgrad.authentication.entity.User;
 import lombok.Getter;

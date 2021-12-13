@@ -1,4 +1,4 @@
-package com.hongikgrad.graduation.entity;
+package com.hongikgrad.course.entity;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
