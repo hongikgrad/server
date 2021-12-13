@@ -1,9 +1,5 @@
 name: Deploy to EC2
-on:
-  push:
-    branches:
-      - develop
-      - master
+on: [push]
 
 jobs:
 
@@ -13,6 +9,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@master
+  
+      
 
       - name: create env file
         run: |
@@ -45,15 +43,6 @@ jobs:
           script: |
             sh /home/ubuntu/srv/ubuntu/config/scripts/memory.sh
 
-      - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ubuntu
-          key: ${{ secrets.KEY }}
-          script: |
-            sh /home/ubuntu/srv/ubuntu/config/scripts/deploy.sh
-
       - name: delete unused images and containers
         uses: appleboy/ssh-action@master
         with:
@@ -62,3 +51,12 @@ jobs:
           key: ${{ secrets.KEY }}
           script: |
             sh /home/ubuntu/srv/ubuntu/config/scripts/delete.sh
+
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ubuntu
+          key: ${{ secrets.KEY }}
+          script: |
+            sh /home/ubuntu/srv/ubuntu/config/scripts/deploy.sh
