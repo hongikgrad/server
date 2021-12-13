@@ -45,3 +45,16 @@ docker-compose.yml
 
 ### local ssl key ###
 *.p12
+
+### ERD Diagram ##3
+*.mwb
+*.mwb.*
+
+### sql
+*.sql
+
+### excel
+*.csv
+
+### test
+**/test/

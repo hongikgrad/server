@@ -24,6 +24,14 @@ spring:
     activate:
       on-profile: dev
 
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    generate-ddl: false
+    show-sql: false
+    properties.hibernate.format_sql: true
+    hibernate.ddl-auto: validate
+
 server:
   ssl:
     enabled: true
@@ -31,17 +39,6 @@ server:
     key-store-password: 123456
     key-store-type: PKCS12
     key-alias: bns-ssl
-
-  jpa:
-    database: mysql
-    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
-
-    generate-ddl: true
-
-    show-sql: true
-    properties.hibernate.format_sql: true
-
-    hibernate.ddl-auto: create
 
 ---
 
@@ -54,6 +51,6 @@ spring:
     database: mysql
     database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
     show-sql: false
-    hibernate.ddl-auto: none
+    hibernate.ddl-auto: validate
     properties.hibernate.format_sql: false
 
