@@ -1,4 +1,4 @@
-package com.hongikgrad.graduation.entity;
+package com.hongikgrad.course.entity;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,6 +8,13 @@ import javax.persistence.*;
 @Entity
 @Getter
 @NoArgsConstructor
+@Table(
+    uniqueConstraints={
+        @UniqueConstraint(
+                columnNames={"course_number","course_credit"}
+        )
+	}
+)
 public class Course {
 
     @Id
