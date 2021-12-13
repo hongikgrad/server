@@ -1,6 +1,6 @@
-package com.hongikgrad.graduation.repository;
+package com.hongikgrad.course.repository;
 
-import com.hongikgrad.graduation.entity.Abeek;
+import com.hongikgrad.course.entity.Abeek;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AbeekRepository extends JpaRepository<Abeek, Long> {

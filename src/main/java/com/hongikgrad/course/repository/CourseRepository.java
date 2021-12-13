@@ -1,8 +1,9 @@
-package com.hongikgrad.graduation.repository;
+package com.hongikgrad.course.repository;
 
-import com.hongikgrad.graduation.entity.Course;
+import com.hongikgrad.course.entity.Course;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CourseRepository extends JpaRepository<Course, Long> {
-    public Course findByNameAndAndCredit(String name, int credit);
+    public Course findByNumberAndAndCredit(String number, int credit);
+    public Boolean existsCourseByNumberAndCredit(String number, int credit);
 }
