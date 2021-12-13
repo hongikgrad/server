@@ -2,6 +2,8 @@ package com.hongikgrad.authentication.controller;
 
 import com.hongikgrad.authentication.application.UserService;
 import com.hongikgrad.authentication.dto.LoginRequestDto;
+import com.hongikgrad.graduation.dto.CourseResponseDto;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +14,10 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
+
 
 @RestController
 @RequiredArgsConstructor
