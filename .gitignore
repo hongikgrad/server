@@ -49,3 +49,7 @@ docker-compose.yml
 ### ERD Diagram ##3
 *.mwb
 *.mwb.*
+
+*.csv
+**/sql
+**/test
