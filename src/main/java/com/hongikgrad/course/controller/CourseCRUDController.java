@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,45 +22,65 @@ public class CourseCRUDController {
         return null;
     }
 
-    @PostMapping("/courses/abeek")
-    public ResponseEntity<String> saveAbeekCourses(HttpServletResponse request, @RequestBody SearchCourseDto searchCourseDto) {
-        try {
-            Map<String, String> data = Map.of(
-                    "p_yy", searchCourseDto.getP_yy(),
-                    "p_hakgi", searchCourseDto.getP_hakgi(),
-                    "p_ibhak", "2016",
-                    "p_campus", "1",
-                    "p_gubun", "1",
-                    "p_dept", searchCourseDto.getP_dept(),
-                    "p_grade", searchCourseDto.getP_grade(),
-                    "p_abeek", "1"
-            );
-            courseService.saveAbeekCoursesFromTimeTable(data);
-            return new ResponseEntity<String>("저장 성공", HttpStatus.OK);
-        } catch(IOException | IndexOutOfBoundsException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-    }
+    @PostMapping("/courses/all")
+    public ResponseEntity<String> saveAllCourses() {
+        List<String> deptList = List.of(
+                "A000", "A010", "A040", "A160", "A170", "A191", "A200",
+                "B010", "C010", "C020", "C030", "C040", "E000", "E010", "E020", "E030", "E040", "E050",
+                "N010", "F000", "F010", "F020", "F030", "F040", "F090", "F120", "F130", "F140", "F150", "F170",
+                "M000", "M020", "K010", "J010", "J020"
+        );
 
-    @PostMapping("/courses/nonabeek")
-    public ResponseEntity<String> saveNonAbeekCourses(HttpServletResponse request, @RequestBody SearchCourseDto searchCourseDto) {
+        Map<String, String> data = new HashMap<>();
+        data.put("p_ibhak", "2016");
+        data.put("p_campus", "1");
+        data.put("p_gubun", "1");
+        data.put("p_abeek", "1");
+        data.put("p_grade", "0");
+
         try {
-            Map<String, String> data = Map.of(
-                    "p_yy", searchCourseDto.getP_yy(),
-                    "p_hakgi", searchCourseDto.getP_hakgi(),
-                    "p_ibhak", "2016",
-                    "p_campus", "1",
-                    "p_gubun", "1",
-                    "p_dept", searchCourseDto.getP_dept(),
-                    "p_grade", searchCourseDto.getP_grade(),
-                    "p_abeek", "1"
-            );
-            courseService.saveNonAbeekCoursesFromTimeTable(data);
+            for(int i = 2016; i <= 2021; i++) {
+                for(int h = 1; h <= 2; h++) {
+                    String year = Integer.toString(i);
+                    String hakgi = Integer.toString(h);
+                    data.put("p_yy", year);
+                    data.put("p_hakgi", hakgi);
+
+                    /* major */
+                    for (String dept : deptList) {
+                        data.put("p_grade", "0");
+                        data.put("p_dept", dept);
+                        courseService.saveNonAbeekCoursesFromTimeTable(data);
+                    }
+
+                    /* elective */
+                    for (int j = 1; j <= 7; j++) {
+                        String grade = Integer.toString(j);
+                        data.put("p_grade", grade);
+                        data.put("p_dept", "0001");
+                        courseService.saveNonAbeekCoursesFromTimeTable(data);
+                    }
+
+                    /* abeek elective */
+                    for (int j = 11; j <= 13; j++) {
+                        String grade = Integer.toString(j);
+                        data.put("p_grade", grade);
+                        data.put("p_dept", "0001");
+                        courseService.saveAbeekCoursesFromTimeTable(data);
+                    }
+
+                    for (int j = 14; j <= 16; j++) {
+                        String grade = Integer.toString(j);
+                        data.put("p_grade", grade);
+                        data.put("p_dept", "0001");
+                        courseService.saveNonAbeekCoursesFromTimeTable(data);
+                    }
+                }
+            }
             return new ResponseEntity<String>("저장 성공", HttpStatus.OK);
-        } catch(IOException | IndexOutOfBoundsException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<String>(e.toString(), HttpStatus.BAD_REQUEST);
         }
     }
 
