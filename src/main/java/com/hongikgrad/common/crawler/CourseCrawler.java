@@ -18,8 +18,6 @@ import static org.jsoup.Connection.Method.*;
 @RequiredArgsConstructor
 public class CourseCrawler extends Crawler {
 
-    private final CourseRepository courseRepository;
-
     public List<Course> getAbeekCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
         Element tbody = getParsedTimeTableBody(data);
         return getCoursesFromTableBody(tbody, 5);
@@ -30,20 +28,32 @@ public class CourseCrawler extends Crawler {
         return getCoursesFromTableBody(tbody, 4);
     }
 
-    private List<Course> getCoursesFromTableBody(Element tbody, int classNumberIndex) throws IndexOutOfBoundsException {
+    private List<Course> getCoursesFromTableBody(Element tbody, int courseNumberIndex) throws IndexOutOfBoundsException, NumberFormatException {
         List<Course> courses = new ArrayList<>();
         String regex1 = "(\\(\\*\\))";
         String regex2 = "(\\(사이버강좌\\))";
         for (int i = 1; i <= tbody.childrenSize() - 3; i++) {
             Element row = tbody.child(i);
-            String classNumber = row.child(classNumberIndex).text().substring(0, 6);
-            String className = row.child(classNumberIndex + 1).text()
+            if(!validateRow(row, courseNumberIndex)) return courses;
+            if(!validateCourseNumber(row, courseNumberIndex)) continue;
+            String courseNumber = row.child(courseNumberIndex).text().substring(0, 6);
+            String courseName = row.child(courseNumberIndex + 1).text()
                     .replaceAll(regex1, "")
                     .replaceAll(regex2, "");
-            int classCredit = Integer.parseInt(row.child(classNumberIndex + 2).text());
-            courses.add(new Course(className, classCredit, classNumber));
+            int courseCredit = Integer.parseInt(row.child(courseNumberIndex + 2).text());
+            courses.add(new Course(courseName, courseCredit, courseNumber));
         }
         return courses;
+    }
+
+    private Boolean validateRow(Element row, int courseNumberIndex) {
+        return row.childrenSize() >= courseNumberIndex;
+    }
+
+    private Boolean validateCourseNumber(Element row, int courseNumberIndex) {
+        String courseNumber = row.child(courseNumberIndex).text();
+        if(courseNumber.length() < 6) return false;
+        return courseNumber.substring(0, 6).matches("[0-9]{6}");
     }
 
     private Element getParsedTimeTableBody(Map<String, String> data) throws IOException {
