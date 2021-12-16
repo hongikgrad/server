@@ -62,6 +62,7 @@ public class CourseService {
         }
     }
 
+    /* 홍익대 시간표 사이트에서 과목들을 크롤링한 뒤 저장 */
     public void saveCoursesFromTimeTable(Map<String, String> data) throws IOException {
         try {
             List<Course> courses = new ArrayList<>();
@@ -74,27 +75,5 @@ public class CourseService {
             System.out.println(data.get("p_yy") + data.get("p_hakgi") + data.get("p_dept"));
             courseRepository.saveAll(courses);
         } catch(IndexOutOfBoundsException ignored) {}
-    }
-
-    /* 홍익대 시간표에서 과목을 가져와서 저장 */
-    public void saveAbeekCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
-        List<Course> courses = courseCrawler.getAbeekCoursesFromTimeTable(data);
-        for (Course course : courses) {
-            if (courseRepository.existsCourseByNumberAndCredit(course.getNumber(), course.getCredit())) continue;
-            courseRepository.save(course);
-        }
-
-        for(Course course : courses) {
-            Course findCourse = courseRepository.findByNumberAndAndCredit(course.getNumber(), course.getCredit());
-//            Abeek abeek = new Abeek(findCourse, );
-        }
-    }
-
-    public void saveNonAbeekCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
-        List<Course> courses = courseCrawler.getNonAbeekCoursesFromTimeTable(data);
-        for (Course course : courses) {
-            if (courseRepository.existsCourseByNumberAndCredit(course.getNumber(), course.getCredit())) continue;
-            courseRepository.save(course);
-        }
     }
 }
