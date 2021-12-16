@@ -7,20 +7,15 @@ import com.hongikgrad.common.crawler.CourseCrawler;
 import com.hongikgrad.common.crawler.UserCourseCrawler;
 import com.hongikgrad.course.dto.CourseCrawlingDto;
 import com.hongikgrad.course.dto.CourseResponseDto;
-import com.hongikgrad.course.entity.Abeek;
 import com.hongikgrad.course.entity.Course;
-import com.hongikgrad.course.entity.Major;
 import com.hongikgrad.course.entity.UserCourse;
-import com.hongikgrad.course.repository.AbeekRepository;
 import com.hongikgrad.course.repository.CourseRepository;
-import com.hongikgrad.course.repository.MajorRepository;
 import com.hongikgrad.course.repository.UserCourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.*;
 
 @Service
