@@ -1,53 +1,55 @@
 package com.hongikgrad.common.crawler;
 
+import com.hongikgrad.course.dto.CourseCrawlingDto;
 import com.hongikgrad.course.entity.Course;
-import com.hongikgrad.course.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static org.jsoup.Connection.Method.*;
 
 @Component
 @RequiredArgsConstructor
 public class CourseCrawler extends Crawler {
-
-    public List<Course> getAbeekCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
+    public Set<CourseCrawlingDto> getCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
         Element tbody = getParsedTimeTableBody(data);
-        return getCoursesFromTableBody(tbody, 5);
+        return getCoursesFromTbody(tbody);
     }
 
-    public List<Course> getNonAbeekCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
-        Element tbody = getParsedTimeTableBody(data);
-        return getCoursesFromTableBody(tbody, 4);
-    }
-
-    private List<Course> getCoursesFromTableBody(Element tbody, int courseNumberIndex) throws IndexOutOfBoundsException, NumberFormatException {
-        List<Course> courses = new ArrayList<>();
+    private Set<CourseCrawlingDto> getCoursesFromTbody(Element tbody) throws IndexOutOfBoundsException {
+        Set<CourseCrawlingDto> courses = new HashSet<>();
+        int courseNumberIndex = getCourseNumberIndex(tbody.child(0));
         String regex1 = "(\\(\\*\\))";
         String regex2 = "(\\(사이버강좌\\))";
         for (int i = 1; i <= tbody.childrenSize() - 3; i++) {
             Element row = tbody.child(i);
             if(!validateRow(row, courseNumberIndex)) return courses;
             if(!validateCourseNumber(row, courseNumberIndex)) continue;
+            String courseType = row.child(courseNumberIndex - 1).text();
             String courseNumber = row.child(courseNumberIndex).text().substring(0, 6);
             String courseName = row.child(courseNumberIndex + 1).text()
                     .replaceAll(regex1, "")
                     .replaceAll(regex2, "");
             int courseCredit = Integer.parseInt(row.child(courseNumberIndex + 2).text());
-            courses.add(new Course(courseName, courseCredit, courseNumber));
+            courses.add(new CourseCrawlingDto(courseName, courseCredit, courseNumber, courseType));
         }
         return courses;
     }
 
+    private int getCourseNumberIndex(Element row) {
+        for(int i = 0; i < row.childrenSize(); i++) {
+            if(row.child(i).text().equals("학수 번호")) return i;
+        }
+        // 유효하지 않은 페이지
+        throw new IndexOutOfBoundsException();
+    }
+
     private Boolean validateRow(Element row, int courseNumberIndex) {
-        return row.childrenSize() >= courseNumberIndex;
+        return row.childrenSize() >= courseNumberIndex + 2;
     }
 
     private Boolean validateCourseNumber(Element row, int courseNumberIndex) {
