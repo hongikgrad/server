@@ -31,9 +31,20 @@ public class Course {
     @Column(name = "course_number", nullable = false)
     private String number;
 
+    @Column(name = "course_abeek")
+    private String abeek;
+
     public Course(String name, int credit, String number) {
         this.name = name;
         this.credit = credit;
         this.number = number;
+        this.abeek = "none";
+    }
+
+    public Course(String name, int credit, String number, String abeek) {
+        this.name = name;
+        this.credit = credit;
+        this.number = number;
+        this.abeek = abeek;
     }
 }
