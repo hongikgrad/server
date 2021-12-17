@@ -6,7 +6,9 @@ import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.common.crawler.CourseCrawler;
 import com.hongikgrad.common.crawler.UserCourseCrawler;
 import com.hongikgrad.course.dto.CourseCrawlingDto;
+import com.hongikgrad.course.dto.CourseDto;
 import com.hongikgrad.course.dto.CourseResponseDto;
+import com.hongikgrad.course.dto.UserTakenCourseDto;
 import com.hongikgrad.course.entity.Course;
 import com.hongikgrad.course.entity.UserCourse;
 import com.hongikgrad.course.repository.CourseRepository;
@@ -41,9 +43,20 @@ public class CourseService {
         return ret;
     }
 
-    public List<CourseResponseDto> getUserTakenCourses(HttpServletRequest request) throws IOException, NullPointerException{
+    public UserTakenCourseDto getUserTakenCourses(HttpServletRequest request) throws IOException, NullPointerException{
         String studentId = cookieService.getStudentIdFromCookie(request);
-        return userCourseRepository.findUserTakenCoursesByStudentId(studentId);
+        List<CourseDto> userTakenCourses = userCourseRepository.findUserTakenCoursesByStudentId(studentId);
+        int totalCredit = 0;
+        int totalCount = userTakenCourses.size();
+        for (CourseDto course : userTakenCourses) {
+            totalCredit += course.getCredit();
+        }
+        return new UserTakenCourseDto(totalCredit, totalCount, userTakenCourses);
+    }
+
+    public int getUserTakenTotalCredit(HttpServletRequest request) {
+        String studentId = cookieService.getStudentIdFromCookie(request);
+        return 0;
     }
 
     /* 유저가 들은 과목들 클래스넷에서 가져와서 저장 */
