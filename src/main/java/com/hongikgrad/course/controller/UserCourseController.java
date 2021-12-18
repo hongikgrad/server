@@ -1,7 +1,9 @@
 package com.hongikgrad.course.controller;
 
 import com.hongikgrad.course.application.CourseService;
+import com.hongikgrad.course.dto.CourseDto;
 import com.hongikgrad.course.dto.CourseResponseDto;
+import com.hongikgrad.course.dto.UserTakenCourseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,12 +25,15 @@ public class UserCourseController {
     @GetMapping("/users/courses")
     public ResponseEntity getUserCourses(HttpServletRequest request) {
         try {
-            List<CourseResponseDto> userTakenCourses = courseService.getUserTakenCourses(request);
-            return new ResponseEntity<List<CourseResponseDto>>(userTakenCourses, HttpStatus.OK);
+            return new ResponseEntity<UserTakenCourseDto>(
+                    courseService.getUserTakenCourses(request),
+                    HttpStatus.OK
+            );
         } catch (IOException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (NullPointerException e) {
-            return new ResponseEntity<String>("sid를 알 수 없습니다.", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<String>("유저의 정보를 알 수 없습니다.",
+                    HttpStatus.NOT_FOUND);
         }
     }
 

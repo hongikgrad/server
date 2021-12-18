@@ -23,4 +23,9 @@ public class Major {
 
     @Column(nullable = false)
     private String department;
+
+    public Major(Course course, String department) {
+        this.course = course;
+        this.department = department;
+    }
 }

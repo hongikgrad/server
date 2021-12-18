@@ -1,6 +1,8 @@
 package com.hongikgrad.course.repository;
 
+import com.hongikgrad.course.dto.CourseDto;
 import com.hongikgrad.course.dto.CourseResponseDto;
+import com.hongikgrad.course.entity.Course;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
@@ -16,18 +18,32 @@ public class UserCourseRepositoryImpl implements UserCourseRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<CourseResponseDto> findUserTakenCoursesByStudentId(String studentId) {
+    public List<CourseDto> findUserTakenCoursesByStudentId(String studentId) {
         return queryFactory
                 .select(
                         constructor(
-                                CourseResponseDto.class,
+                                CourseDto.class,
                                 course.name,
-                                course.credit,
-                                course.number)
+                                course.number,
+                                course.abeek,
+                                course.credit
+                                )
                 )
                 .from(userCourse)
                 .join(userCourse.course, course)
                 .where(userCourse.user.studentId.eq(studentId))
                 .fetch();
+    }
+
+    @Override
+    public List<CourseDto> findUserTakenAbeekCoursesByStudentId(String studentId) {
+        queryFactory
+                .select(
+                )
+                .from(userCourse)
+                .join(userCourse.course, course)
+                .where(userCourse.user.studentId.eq(studentId).and(userCourse.course.abeek.length().gt(3)))
+                .fetch();
+        return null;
     }
 }
