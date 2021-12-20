@@ -1,10 +1,8 @@
 package com.hongikgrad.common.crawler;
 
-import com.hongikgrad.course.dto.CourseCrawlingDto;
-import com.hongikgrad.course.entity.Course;
+import com.hongikgrad.course.dto.CrawlingCourseDto;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -15,13 +13,13 @@ import static org.jsoup.Connection.Method.*;
 @Component
 @RequiredArgsConstructor
 public class CourseCrawler extends Crawler {
-    public Set<CourseCrawlingDto> getCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
+    public Set<CrawlingCourseDto> getCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
         Element tbody = getParsedTimeTableBody(data);
         return getCoursesFromTbody(tbody);
     }
 
-    private Set<CourseCrawlingDto> getCoursesFromTbody(Element tbody) throws IndexOutOfBoundsException {
-        Set<CourseCrawlingDto> courses = new HashSet<>();
+    private Set<CrawlingCourseDto> getCoursesFromTbody(Element tbody) throws IndexOutOfBoundsException {
+        Set<CrawlingCourseDto> courses = new HashSet<>();
         int courseNumberIndex = getCourseNumberIndex(tbody.child(0));
         String regex1 = "(\\(\\*\\))";
         String regex2 = "(\\(사이버강좌\\))";
@@ -29,13 +27,16 @@ public class CourseCrawler extends Crawler {
             Element row = tbody.child(i);
             if(!validateRow(row, courseNumberIndex)) return courses;
             if(!validateCourseNumber(row, courseNumberIndex)) continue;
+            int courseYear = Integer.parseInt(row.child(0).text());
+            String courseMadeBy = row.child(1).text();
+            String courseSuperviseBy = row.child(2).text();
             String courseType = row.child(courseNumberIndex - 1).text();
             String courseNumber = row.child(courseNumberIndex).text().substring(0, 6);
             String courseName = row.child(courseNumberIndex + 1).text()
                     .replaceAll(regex1, "")
                     .replaceAll(regex2, "");
             int courseCredit = Integer.parseInt(row.child(courseNumberIndex + 2).text());
-            courses.add(new CourseCrawlingDto(courseName, courseCredit, courseNumber, courseType));
+            courses.add(new CrawlingCourseDto(courseName, courseCredit, courseNumber, courseType, courseMadeBy, courseSuperviseBy, courseYear));
         }
         return courses;
     }

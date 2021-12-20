@@ -1,5 +1,6 @@
 package com.hongikgrad.course.entity;
 
+import com.hongikgrad.course.dto.CrawlingCourseDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -18,7 +19,7 @@ import javax.persistence.*;
 public class Course {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "course_id")
     private Long id;
 
@@ -46,5 +47,15 @@ public class Course {
         this.credit = credit;
         this.number = number;
         this.abeek = abeek;
+    }
+
+    @Override
+    public boolean equals(Object a) {
+        return (a instanceof Course) && (((Course) a).getNumber().equals(this.getNumber())) && ((Course) a).getCredit() == this.getCredit();
+    }
+
+    @Override
+    public int hashCode() {
+        return (this.getNumber() + this.getCredit()).hashCode();
     }
 }

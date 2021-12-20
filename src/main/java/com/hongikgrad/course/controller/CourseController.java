@@ -1,9 +1,11 @@
 package com.hongikgrad.course.controller;
 
 import com.hongikgrad.course.application.CourseService;
+import com.hongikgrad.course.dto.CrawlingCourseListDto;
 import com.hongikgrad.course.dto.InquiredCoursesResponseDto;
 import com.hongikgrad.course.dto.CourseResponseDto;
-import com.hongikgrad.course.dto.TotalCourseResponseDto;
+import com.hongikgrad.course.entity.Course;
+import com.hongikgrad.course.entity.MajorCourse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +48,8 @@ public class CourseController {
         data.put("p_grade", "0");
 
         try {
+            Set<Course> courses = new HashSet<>();
+            Set<MajorCourse> majorCourses = new HashSet<>();
             for(int i = 2016; i <= 2021; i++) {
                 for(int h = 1; h <= 2; h++) {
                     String year = Integer.toString(i);
@@ -57,7 +61,9 @@ public class CourseController {
                     for (String dept : deptList) {
                         data.put("p_grade", "0");
                         data.put("p_dept", dept);
-                        courseService.saveCoursesFromTimeTable(data);
+                        CrawlingCourseListDto result = courseService.getCoursesFromTimeTable(data);
+                        courses.addAll(result.getCourses());
+                        majorCourses.addAll(result.getMajorCourses());
                     }
 
                     /* elective */
@@ -65,10 +71,14 @@ public class CourseController {
                         String grade = Integer.toString(j);
                         data.put("p_grade", grade);
                         data.put("p_dept", "0001");
-                        courseService.saveCoursesFromTimeTable(data);
+                        CrawlingCourseListDto result = courseService.getCoursesFromTimeTable(data);
+                        courses.addAll(result.getCourses());
+                        majorCourses.addAll(result.getMajorCourses());
                     }
                 }
             }
+            courseService.saveCourses(courses);
+            courseService.saveMajorCourses(majorCourses);
             return new ResponseEntity<String>("저장 성공", HttpStatus.OK);
         } catch (IOException e) {
             e.printStackTrace();
