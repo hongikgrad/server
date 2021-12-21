@@ -1,6 +1,7 @@
 package com.hongikgrad.common.crawler;
 
 import com.hongikgrad.course.dto.CrawlingCourseDto;
+import com.hongikgrad.course.dto.CrawlingCourseListDto;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Component;
@@ -13,19 +14,20 @@ import static org.jsoup.Connection.Method.*;
 @Component
 @RequiredArgsConstructor
 public class CourseCrawler extends Crawler {
-    public Set<CrawlingCourseDto> getCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
+    public CrawlingCourseListDto getCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
         Element tbody = getParsedTimeTableBody(data);
         return getCoursesFromTbody(tbody);
     }
 
-    private Set<CrawlingCourseDto> getCoursesFromTbody(Element tbody) throws IndexOutOfBoundsException {
+    private CrawlingCourseListDto getCoursesFromTbody(Element tbody) throws IndexOutOfBoundsException {
         Set<CrawlingCourseDto> courses = new HashSet<>();
+        Set<String> majors = new HashSet<>();
         int courseNumberIndex = getCourseNumberIndex(tbody.child(0));
         String regex1 = "(\\(\\*\\))";
         String regex2 = "(\\(사이버강좌\\))";
         for (int i = 1; i <= tbody.childrenSize() - 3; i++) {
             Element row = tbody.child(i);
-            if(!validateRow(row, courseNumberIndex)) return courses;
+            if(!validateRow(row, courseNumberIndex)) continue;
             if(!validateCourseNumber(row, courseNumberIndex)) continue;
             int courseYear = Integer.parseInt(row.child(0).text());
             String courseMadeBy = row.child(1).text();
@@ -37,8 +39,9 @@ public class CourseCrawler extends Crawler {
                     .replaceAll(regex2, "");
             int courseCredit = Integer.parseInt(row.child(courseNumberIndex + 2).text());
             courses.add(new CrawlingCourseDto(courseName, courseCredit, courseNumber, courseType, courseMadeBy, courseSuperviseBy, courseYear));
+            majors.add(courseMadeBy);
         }
-        return courses;
+        return new CrawlingCourseListDto(courses, majors);
     }
 
     private int getCourseNumberIndex(Element row) {
