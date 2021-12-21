@@ -78,41 +78,50 @@ public class CourseService {
     }
 
     public void saveCourses(Set<Course> courses) {
-//        courseRepository.saveAll(courses);
+        courseRepository.saveAll(courses);
     }
 
     public void saveMajorCourses(Set<MajorCourse> majorCourses) {
-//        majorCourseRepository.saveAll(majorCourses);
+        majorCourseRepository.saveAll(majorCourses);
     }
 
     /* 홍익대 시간표 사이트에서 과목들을 크롤링해서 가져옴 */
-    public CrawlingCourseListDto getCoursesFromTimeTable(Map<String, String> data) throws IOException {
+    public MajorCourseListDto getCoursesFromTimeTable(Map<String, String> data) throws IOException {
         try {
-            Set<Course> courses = new HashSet<>();
-            Set<MajorCourse> majorCourses = new HashSet<>();
-            Set<CrawlingCourseDto> courseDtos = courseCrawler.getCoursesFromTimeTable(data);
-            Major major = null;
-            for (CrawlingCourseDto courseDto : courseDtos) {
-                if (major == null || !major.getName().equals(courseDto.getMadeBy())) {
-                    major = majorRepository.findMajorByName(courseDto.getMadeBy());
-                }
-                Course course = null;
-                if(!courseRepository.existsCourseByNumberAndCredit(courseDto.getNumber(), courseDto.getCredit())) {
-                    course = courseRepository.save(new Course(courseDto.getName(), courseDto.getCredit(), courseDto.getNumber(), courseDto.getAbeek()));
+            CrawlingCourseListDto result = courseCrawler.getCoursesFromTimeTable(data);
+
+            Set<Major> majors = new HashSet<>();
+            Set<String> majorNames = result.getMajors();
+            for (String majorName : majorNames) {
+                Optional<Major> optionalMajor = majors.stream().filter(m -> m.getName().equals(majorName)).findFirst();
+                Major major;
+                if(optionalMajor.isPresent()) {
+                    major = optionalMajor.get();
                 } else {
-                    course = courseRepository.findByNumberAndAndCredit(courseDto.getNumber(), courseDto.getCredit());
-                }
-                if (!courseDto.getMadeBy().contains("교양")) {
-                    if (major == null) major = majorRepository.saveAndFlush(new Major(courseDto.getMadeBy()));
-                    if (course.getAbeek().equals("전필")) {
-                        majorCourses.add(new MajorCourse(major, course, true));
-                    } else {
-                        majorCourses.add(new MajorCourse(major, course, false));
+                    major = majorRepository.findMajorByName(majorName);
+                    if(major == null) {
+                        major = majorRepository.save(new Major(majorName));
                     }
                 }
+                majors.add(major);
             }
-            majorCourseRepository.saveAllAndFlush(majorCourses);
-            return new CrawlingCourseListDto(courses, majorCourses);
+
+            Set<Course> courses = new HashSet<>();
+            Set<MajorCourse> majorCourses = new HashSet<>();
+            Set<CrawlingCourseDto> courseDtos = result.getCourses();
+            for (CrawlingCourseDto courseDto : courseDtos) {
+                Course course;
+                course = courseRepository.findByNumberAndAndCredit(courseDto.getNumber(), courseDto.getCredit());
+                if(course == null) {
+                    course = courseRepository.save(new Course(courseDto.getName(), courseDto.getCredit(), courseDto.getNumber(), courseDto.getAbeek()));
+                }
+                if(courseDto.getAbeek().contains("전") && !courseDto.getAbeek().contains("MSC")) {
+                    Major major = majors.stream().filter(m -> m.getName().equals(courseDto.getMadeBy())).findFirst().get();
+                    MajorCourse majorCourse = new MajorCourse(major, course, courseDto.getAbeek().equals("전필"));
+                    majorCourses.add(majorCourse);
+                }
+            }
+            return new MajorCourseListDto(majorCourses, courses);
         } catch(IndexOutOfBoundsException ignored) {
             return null;
         }

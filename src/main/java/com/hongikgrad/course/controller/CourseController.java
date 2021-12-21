@@ -1,9 +1,9 @@
 package com.hongikgrad.course.controller;
 
 import com.hongikgrad.course.application.CourseService;
-import com.hongikgrad.course.dto.CrawlingCourseListDto;
 import com.hongikgrad.course.dto.InquiredCoursesResponseDto;
 import com.hongikgrad.course.dto.CourseResponseDto;
+import com.hongikgrad.course.dto.MajorCourseListDto;
 import com.hongikgrad.course.entity.Course;
 import com.hongikgrad.course.entity.MajorCourse;
 import lombok.RequiredArgsConstructor;
@@ -61,9 +61,9 @@ public class CourseController {
                     for (String dept : deptList) {
                         data.put("p_grade", "0");
                         data.put("p_dept", dept);
-                        CrawlingCourseListDto result = courseService.getCoursesFromTimeTable(data);
-                        courses.addAll(result.getCourses());
+                        MajorCourseListDto result = courseService.getCoursesFromTimeTable(data);
                         majorCourses.addAll(result.getMajorCourses());
+                        courses.addAll(result.getCourses());
                     }
 
                     /* elective */
@@ -71,13 +71,13 @@ public class CourseController {
                         String grade = Integer.toString(j);
                         data.put("p_grade", grade);
                         data.put("p_dept", "0001");
-                        CrawlingCourseListDto result = courseService.getCoursesFromTimeTable(data);
-                        courses.addAll(result.getCourses());
+                        MajorCourseListDto result = courseService.getCoursesFromTimeTable(data);
                         majorCourses.addAll(result.getMajorCourses());
+                        courses.addAll(result.getCourses());
                     }
                 }
             }
-            courseService.saveCourses(courses);
+//            courseService.saveCourses(courses);
             courseService.saveMajorCourses(majorCourses);
             return new ResponseEntity<String>("저장 성공", HttpStatus.OK);
         } catch (IOException e) {
