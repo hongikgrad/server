@@ -3,8 +3,9 @@ package com.hongikgrad.course;
 import com.hongikgrad.authentication.entity.User;
 import com.hongikgrad.common.hash.SHA256;
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.entity.Course;
-import com.hongikgrad.course.entity.UserCourse;
+import com.hongikgrad.course.entity.*;
+import com.hongikgrad.course.repository.MajorRepository;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.hongikgrad.course.entity.QCourse.course;
+import static com.hongikgrad.course.entity.QMajor.major;
+import static com.hongikgrad.course.entity.QMajorCourse.*;
 import static com.hongikgrad.course.entity.QUserCourse.userCourse;
 import static com.querydsl.core.types.Projections.*;
 
@@ -35,7 +38,9 @@ public class RepositoryTest {
 	@Autowired
 	SHA256 sha256;
 
-	@BeforeEach
+	@Autowired
+	MajorRepository majorRepository;
+
 	public void before() {
 		User user1 = new User(sha256.hash("b615125"));
 		User user2 = new User(sha256.hash("b615150"));
@@ -222,6 +227,99 @@ public class RepositoryTest {
 
 		courses.forEach(course -> System.out.println("abeek = " + course.getName() + " " + course.getAbeek()));
 		requiredCourses.forEach(area -> System.out.println(area));
+	}
+
+	@Test
+	public void majorFindTest() {
+		Major major1 = new Major("전자전기공학", "공과대학");
+		Major major2 = new Major("기계공학", "공과대학");
+		em.persist(major1);
+		em.persist(major2);
+
+//		Major findMajor1 = majorRepository.findMajorByDeptCode("A040");
+//		System.out.println("findMajor1 = " + findMajor1.getName());
+//		Major findMajor2 = majorRepository.findMajorByDeptCode("A041");
+//		 NPE
+//		System.out.println("findMajor2 = " + findMajor2.getName());
+	}
+
+	@Test
+	public void majorCourseFindTest() {
+		Major findMajor = majorRepository.findMajorByNameContains("전자");
+		List<CourseDto> fetch = queryFactory
+				.select(
+						constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit
+						)
+				)
+				.from(majorCourse)
+				.join(majorCourse.major, major)
+				.on(major.name.eq(findMajor.getName()))
+				.join(majorCourse.course, course)
+				.fetch();
+
+		for (CourseDto courseDto : fetch) {
+			System.out.println(courseDto.getName() + " " + courseDto.getNumber() + " " + courseDto.getAbeek());
+		}
+	}
+
+	@Test
+	public void requiredMajorCoursesFindTest() {
+		Major findMajor = majorRepository.findMajorByNameContains("전자");
+		List<CourseDto> fetch = queryFactory
+				.select(
+						constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit
+						)
+				)
+				.from(majorCourse)
+				.join(majorCourse.major, major)
+				.on(major.name.eq(findMajor.getName()))
+				.join(majorCourse.course, course)
+				.where(majorCourse.isRequired.eq(true))
+				.fetch();
+
+		for (CourseDto courseDto : fetch) {
+			System.out.println(courseDto.getName() + " " + courseDto.getNumber() + " " + courseDto.getAbeek());
+		}
+	}
+
+	@Test
+	public void requiredMajorCoursesFindTest2() {
+		Major findMajor = majorRepository.findMajorByNameContains("기계");
+		List<CourseDto> fetch = queryFactory
+				.select(
+						constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit
+						)
+				)
+				.from(majorCourse)
+				.join(majorCourse.major, major)
+				.on(major.name.eq(findMajor.getName()))
+				.join(majorCourse.course, course)
+				.where(majorCourse.isRequired.eq(true))
+				.fetch();
+
+		for (CourseDto courseDto : fetch) {
+			System.out.println(courseDto.getName() + " " + courseDto.getNumber() + " " + courseDto.getAbeek());
+		}
+	}
+
+	@Test
+	public void test22() {
+
 	}
 
 
