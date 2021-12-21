@@ -8,16 +8,23 @@ import javax.persistence.*;
 @Entity
 @Getter
 @NoArgsConstructor
+@Table(
+		uniqueConstraints = {
+				@UniqueConstraint(
+						columnNames = {"course_id", "major_id", "is_required"}
+				)
+		}
+)
 public class MajorCourse {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
 	@JoinColumn(name = "major_id")
 	private Major major;
 
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
 	@JoinColumn(name = "course_id")
 	private Course course;
 
@@ -34,5 +41,15 @@ public class MajorCourse {
 		this.major = major;
 		this.course = course;
 		this.isRequired = isRequired;
+	}
+
+	@Override
+	public boolean equals(Object a) {
+		return (a instanceof MajorCourse) && (((MajorCourse) a).getCourse().equals(this.getCourse())) && ((MajorCourse) a).getMajor() == this.getMajor();
+	}
+
+	@Override
+	public int hashCode() {
+		return (this.getMajor().getName() + this.getCourse()).hashCode();
 	}
 }

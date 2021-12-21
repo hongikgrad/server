@@ -17,7 +17,7 @@ public class Major {
     @Column(name = "major_id")
     private Long id;
 
-    @Column(name = "major_name")
+    @Column(name = "major_name", unique = true)
     private String name;
 
     @Column(name = "major_code")
