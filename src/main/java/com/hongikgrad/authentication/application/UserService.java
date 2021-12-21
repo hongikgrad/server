@@ -6,10 +6,12 @@ import com.hongikgrad.authentication.repository.UserRepository;
 import com.hongikgrad.common.crawler.UserCookieCrawler;
 import com.hongikgrad.common.hash.SHA256;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import javax.naming.AuthenticationException;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -31,8 +33,11 @@ public class UserService {
 
         Map<String, String> userAuthCookie = userCookieCrawler.getUserAuthCookie(loginData);
         String studentId = sha256.hash(loginDto.getId());
+        String userMajor = loginDto.getMajor();
+
         setUserAuthCookie(userAuthCookie, response);
         setUserStudentIdCookie(studentId, response);
+        setUserMajorCookie(userMajor, response);
         saveUser(studentId);
     }
 
@@ -41,24 +46,30 @@ public class UserService {
         userRepository.save(new User(studentId));
     }
 
+    private void setUserMajorCookie(String major, HttpServletResponse response) {
+        Cookie cookie = getCookie("major", major);
+        response.addCookie(cookie);
+    }
+
     private void setUserAuthCookie(Map<String, String> userAuthCookie, HttpServletResponse response) {
         userAuthCookie.forEach((key, value) -> {
-            Cookie cookie = new Cookie(key, value);
-            cookie.setMaxAge(60*60*24);
-            cookie.setSecure(true);
-            cookie.setHttpOnly(true);
-            cookie.setPath("/");
+            Cookie cookie = getCookie(key, value);
             response.addCookie(cookie);
         });
     }
 
     private void setUserStudentIdCookie(String studentId, HttpServletResponse response) {
         /* 암호화된 유저 아이디 쿠키에 넣어줌 */
-        Cookie cookie = new Cookie("sid", studentId);
+        Cookie cookie = getCookie("sid", studentId);
+        response.addCookie(cookie);
+    }
+
+    private Cookie getCookie(String key, String value) {
+        Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(60*60*24);
         cookie.setSecure(true);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        response.addCookie(cookie);
+        return cookie;
     }
 }

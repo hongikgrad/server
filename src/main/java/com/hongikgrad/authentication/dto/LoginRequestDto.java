@@ -12,6 +12,9 @@ public class LoginRequestDto {
     @JsonProperty("PASSWD")
     private String pw;
 
+    @JsonProperty("MAJOR")
+    private String major;
+
     public LoginRequestDto() {
     }
 
