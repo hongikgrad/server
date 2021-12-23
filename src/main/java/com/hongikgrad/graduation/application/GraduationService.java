@@ -2,8 +2,11 @@ package com.hongikgrad.graduation.application;
 
 import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.dto.CourseResponseDto;
+import com.hongikgrad.course.dto.DragonballDto;
+import com.hongikgrad.course.entity.Major;
 import com.hongikgrad.course.repository.CourseRepository;
+import com.hongikgrad.course.repository.MajorCourseRepository;
+import com.hongikgrad.course.repository.MajorRepository;
 import com.hongikgrad.course.repository.UserCourseRepository;
 import com.hongikgrad.graduation.dto.RequiredCoursesDto;
 import lombok.RequiredArgsConstructor;
@@ -20,68 +23,72 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GraduationService {
 
-	UserCourseRepository userCourseRepository;
-	CourseRepository courseRepository;
-	CookieService cookieService;
+	private final UserCourseRepository userCourseRepository;
+	private final CourseRepository courseRepository;
+	private final MajorCourseRepository majorCourseRepository;
+	private final MajorRepository majorRepository;
 
-	public void getUserMajor() {
-	}
+	private final CookieService cookieService;
 
-	public List<RequiredCoursesDto> getRequiredCourses(HttpServletRequest request) {
+	public List<RequiredCoursesDto> getRequirementsForGraduation(HttpServletRequest request) {
+		List<RequiredCoursesDto> totalRequiredCourses = new ArrayList<>();
 		String studentId = cookieService.getStudentIdFromCookie(request);
+		int studentEnter = Integer.parseInt(cookieService.getStudentEnterFromCookie(request));
+		Major studentMajor = majorRepository.findMajorByCode(cookieService.getStudentMajorFromCookie(request));
 		List<CourseDto> userTakenCourses = userCourseRepository.findUserTakenCoursesByStudentId(studentId);
 
-		List<CourseDto> abeek = userTakenCourses.stream()
+		List<CourseDto> userTakenAbeekCourses = userTakenCourses.stream()
 				.filter((course) -> course.getAbeek().length() >= 3 && !course.getAbeek().contains("MSC"))
 				.collect(Collectors.toList());
 
-		List<CourseDto> msc = userTakenCourses.stream()
+		List<CourseDto> userTakenMSCCourses = userTakenCourses.stream()
 				.filter(course -> course.getAbeek().contains("MSC"))
 				.collect(Collectors.toList());
 
-		List<CourseDto> major = userTakenCourses.stream()
-				.filter(course -> course.getAbeek().contains("전") && course.getAbeek().length() >= 3)
-				.collect(Collectors.toList());
-
-		userTakenCourses.removeIf(courseDto ->
-				(courseDto.getAbeek().length() >= 3 || (courseDto.getAbeek().contains("전") && courseDto.getAbeek().length() <= 2))
-		);
-
-		List<RequiredCoursesDto> totalRequiredCourses = new ArrayList<>();
+		List<CourseDto> userTakenMajorCourses = userCourseRepository.findUserTakenMajorCoursesByStudentId(studentId, studentMajor);
 
 		/* abeek(영어, 글쓰기, 드래곤볼) 검사 */
-		List<String> abeekRequirements = getNotTakenAbeekAreas(abeek);
-		for (String area : abeekRequirements) {
-			List<CourseDto> courses = getCoursesMatchedArea(area);
-			totalRequiredCourses.add(new RequiredCoursesDto(area, courses));
-		}
+		Map<String, Object> requiredAbeekCourses = getRequiredAbeekCourses(userTakenAbeekCourses);
+		totalRequiredCourses.add(new RequiredCoursesDto("교양", requiredAbeekCourses));
 
 		/* MSC 검사 */
-		Map<String, Integer> mscRequirements = getNotTakenMSCAreas(msc);
+		Map<String, Integer> mscRequiredCredits = getNotTakenMSCAreas(userTakenMSCCourses);
+		totalRequiredCourses.add(new RequiredCoursesDto("requiredMSCCredits", mscRequiredCredits));
 
-		/* 전공필수, 전공 총 학점 검사 */
-		Map<String, Integer> majorRequirements = getNotTakenRequiredMajors(major);
+		List<CourseDto> mscRequiredCourses = getNotTakenRequiredMSCCourses(userTakenMSCCourses, studentMajor, studentEnter);
+		totalRequiredCourses.add(new RequiredCoursesDto("requiredMSCCourses", mscRequiredCourses));
 
-		/* 전체학점 검사 */
+		/* 필수 전공 검사 */
+		List<CourseDto> majorRequirements = getNotTakenRequiredMajors(userTakenMajorCourses, studentMajor, studentEnter);
+		totalRequiredCourses.add(new RequiredCoursesDto("requiredMajorCourses", majorRequirements));
 
-		List<String> notTakenMSCAreas = null;
-		// 졸업요건 만족 검사
+		/* 전공 학점 검사 */
+		int totalMajorCredits = getUserTakenTotalMajorCredits(userTakenMajorCourses);
+		totalRequiredCourses.add(new RequiredCoursesDto("totalMajorCredits", totalMajorCredits));
+
+		int requiredMajorCredits = Math.max(50 - totalMajorCredits, 0);
+		totalRequiredCourses.add(new RequiredCoursesDto("requiredMajorCredits", requiredMajorCredits));
+
+		/* 전체 학점 검사 */
+		int totalCredits = getUserTakenTotalCredits(userTakenCourses);
+		totalRequiredCourses.add(new RequiredCoursesDto("totalCredits", totalCredits));
+
+		int requiredTotalCredits = Math.max(132 - totalCredits, 0);
+		totalRequiredCourses.add(new RequiredCoursesDto("requiredTotalCredits", requiredTotalCredits));
+
 		return totalRequiredCourses;
 	}
 
-	private List<String> getNotTakenAbeekAreas(List<CourseDto> courses) {
-		// TODO: 과목 체크하고 조건 전부 맞으면 null 보내기
-		List<String> requiredCourses = new ArrayList<>(List.of(
+	private Map<String, Object> getRequiredAbeekCourses(List<CourseDto> courses) {
+		Map<String, Object> requirements = new HashMap<>();
+		List<String> requiredAreas = new ArrayList<>(List.of(
 				"역사와문화",
 				"언어와철학",
 				"사회와경제",
 				"법과생활",
 				"공학의이해",
 				"제2외국어와한문",
-				"예술과디자인",
-				"영어",
-				"전공기초영어",
-				"글쓰기"
+				"예술과디자인"
 		));
 
 		List<String> writingCourseNumbers = new ArrayList<>(List.of(
@@ -96,55 +103,84 @@ public class GraduationService {
 		));
 
 		String englishCourseNumber = "001009";
-		List<String> englishForMajorCourseNumbers = new ArrayList<>(List.of(
+		List<String> majorEnglishCourseNumbers = new ArrayList<>(List.of(
 				"007114",
 				"007115"
 		));
 
-		courses.forEach(course -> {
+		boolean isEnglishTaken = false;
+		boolean isMajorEnglishTaken = false;
+		boolean isWritingTaken = false;
+
+		for (CourseDto course : courses) {
 			String courseNumber = course.getNumber();
 			String courseAbeek = course.getAbeek();
-			boolean isDragonball = requiredCourses.removeIf(area -> area.equals(courseAbeek));
-			if (!isDragonball) {
-				if (requiredCourses.contains("영어") && courseNumber.equals(englishCourseNumber)) {
-					requiredCourses.remove("영어");
-				}
-				if (requiredCourses.contains("글쓰기")) {
-					boolean isRemoved = false;
-					for (String writingCourseNumber : writingCourseNumbers) {
-						if (!isRemoved && writingCourseNumber.equals(courseNumber)) {
-							requiredCourses.remove("글쓰기");
-							isRemoved = true;
-						}
-					}
-				}
-				if (requiredCourses.contains("전공기초영어")) {
-					boolean isRemoved = false;
-					for (String englishForMajorCourseNumber : englishForMajorCourseNumbers) {
-						if (!isRemoved && englishForMajorCourseNumber.equals(courseNumber)) {
-							requiredCourses.remove("전공기초영어");
-							isRemoved = true;
-						}
-					}
-				}
+			boolean removed = requiredAreas.removeIf(area -> area.equals(courseAbeek));
+			if (!removed && writingCourseNumbers.contains(courseNumber)) {
+				isWritingTaken = true;
+			} else if(!isMajorEnglishTaken && majorEnglishCourseNumbers.contains(courseNumber)) {
+				isMajorEnglishTaken = true;
+			} else if(!isEnglishTaken && englishCourseNumber.equals(courseNumber)) {
+				isEnglishTaken = true;
 			}
-		});
+		}
 
-		return requiredCourses;
+		/**
+		 * 1. 예술들음, 나머지 5개들음 -> 역사 들어야됨
+		 * 2. 에술들음 나머지 4개들음. 제2외국어, 역사 남음 -> 제2외국어만 들으면됨
+		 * 3. 둘다안들음, 나머지 5개들음 -> 외궈 예술 둘다 들어야됨
+		 */
+
+		List<DragonballDto> dragonballs = new ArrayList<>();
+
+		int currentSize = 7 - requiredAreas.size();
+
+		if(requiredAreas.contains("제2외국어와한문")) {
+			List<CourseDto> coursesByAbeek = courseRepository.findCoursesByAbeek("제2외국어와한문");
+			dragonballs.add(new DragonballDto("제2외국어와한문", true, coursesByAbeek));
+			currentSize += 1;
+			requiredAreas.remove("제2외국어와한문");
+		}
+
+		if(requiredAreas.contains("예술과디자인")) {
+			List<CourseDto> coursesByAbeek = courseRepository.findCoursesByAbeek("예술과디자인");
+			dragonballs.add(new DragonballDto("예술과디자인", true, coursesByAbeek));
+			currentSize += 1;
+			requiredAreas.remove("예술과디자인");
+		}
+
+		if(currentSize < 6) {
+			for(String area : requiredAreas) {
+				List<CourseDto> coursesByAbeek = courseRepository.findCoursesByAbeek(area);
+				dragonballs.add(new DragonballDto(area, false, coursesByAbeek));
+			}
+		}
+
+		requirements.put("드래곤볼", dragonballs);
+
+		if(!isWritingTaken) {
+			List<CourseDto> writingCourses = courseRepository.findWritingCourses();
+			requirements.put("글쓰기", writingCourses);
+		}
+
+		if(!isMajorEnglishTaken) {
+			List<CourseDto> majorEnglishCourses = courseRepository.findMajorEnglishCourses();
+			requirements.put("전공기초영어", majorEnglishCourses);
+		}
+
+		if(!isEnglishTaken) {
+			List<CourseDto> englishCourse = courseRepository.findEnglishCourse();
+			requirements.put("영어", englishCourse);
+		}
+
+		return requirements;
 	}
 
 	private Map<String, Integer> getNotTakenMSCAreas(List<CourseDto> courses) {
-		/* 전공별 상이 */
 		Map<String, Integer> requirements = new HashMap<String, Integer>(Map.of(
 				"MSC수학", 9,
 				"MSC과학", 9,
 				"MSC전산", 6
-		));
-
-		/* 전공별 상이 */
-		List<String> requiredCourses = new ArrayList<>(List.of(
-				"대학물리실험1",
-				"대학물리실험2"
 		));
 
 		courses.forEach(course -> {
@@ -168,14 +204,98 @@ public class GraduationService {
 		return requirements;
 	}
 
-	private Map<String, Integer> getNotTakenRequiredMajors(List<CourseDto> courses) {
-		List<String> requiredMajor = new ArrayList<>(List.of(
-				"111",
-				"222",
-				"333"
-		));
-		// TODO : 전공에 따른 전공필수 테이블에 저장된거 불러오기
+	private List<CourseDto> getNotTakenRequiredMSCCourses(List<CourseDto> courses, Major studentMajor, int studentEnter) {
+		List<CourseDto> requiredCourses = majorCourseRepository.findRequiredMSCCourse();
+		String majorName = studentMajor.getName();
+		//			requiredCourses.add("012104"); //대학물리2 *
+//			requiredCourses.add("012106"); //대학물리2실험 *
+//
+//			requiredCourses.add("012107"); //대학화학1 *
+//			requiredCourses.add("012109"); //대학화학1실험 *
+//
+//			requiredCourses.add("012110"); //대학화학2
+//			requiredCourses.add("012113"); //대학화학2실험
+//
+//			requiredCourses.add("012101"); //대학물리1
+//			requiredCourses.add("012103"); //대학물리1실험
+
+		if(majorName.contains("전자")) {
+			// 16-22학번
+			for(CourseDto courseDto : courses) {
+				String courseNumber = courseDto.getNumber();
+				requiredCourses.removeIf(course -> course.getNumber().equals(courseNumber));
+			}
+			if(!requiredCourses.contains(new CourseDto("012110", 3))
+					&& !requiredCourses.contains(new CourseDto("012113", 1))) {
+				requiredCourses.removeIf(course -> course.getNumber().equals("012101") || course.getNumber().equals("012103"));
+			} else if (!requiredCourses.contains(new CourseDto("012101", 3))
+					&& !requiredCourses.contains(new CourseDto("012103", 1))) {
+				requiredCourses.removeIf(course -> course.getNumber().equals("012110") || course.getNumber().equals("012113"));
+			}
+		} else if(majorName.contains("컴퓨터")) {
+			// 컴공 비공학
+
+		} else if(majorName.contains("기계")) {
+			// 기계 공학
+
+		} else if(majorName.contains("화학")) {
+			// 화공 비공학
+
+		} else if(majorName.contains("신소재")) {
+			// 신소재 비공학
+
+		} else if(majorName.contains("산업공")) {
+			// 산공 공학
+
+		}
+
+		return requiredCourses;
+	}
+
+	private List<CourseDto> getNotTakenRequiredMajors(List<CourseDto> courses, Major studentMajor, int studentEnter) {
+		List<CourseDto> requiredCourses = majorCourseRepository.findRequiredCoursesByMajor(studentMajor);
+		for(CourseDto courseDto : courses) {
+			requiredCourses.removeIf(course -> course.getName().equals(courseDto.getName()));
+		}
+
+		if(studentMajor.getName().contains("전자")) {
+			if (!requiredCourses.contains(new CourseDto("013704", 2))) {
+				requiredCourses.remove(new CourseDto("106824", 3));
+			}
+
+			if (!requiredCourses.contains(new CourseDto("013805", 3))) {
+				requiredCourses.remove(new CourseDto("106825", 3));
+			}
+
+			if (!requiredCourses.contains(new CourseDto("106820", 3))) {
+				requiredCourses.remove(new CourseDto("106827", 3));
+			}
+
+			requiredCourses.remove(new CourseDto("013704", 2));
+			requiredCourses.remove(new CourseDto("013805", 3));
+			requiredCourses.remove(new CourseDto("106820", 3));
+
+			// 창직 17부터 필수
+
+			return requiredCourses;
+		}
 		return null;
+	}
+
+	private int getUserTakenTotalMajorCredits(List<CourseDto> courses) {
+		int totalCredits = 0;
+		for(CourseDto course : courses) {
+			totalCredits += course.getCredit();
+		}
+		return totalCredits;
+	}
+
+	private int getUserTakenTotalCredits(List<CourseDto> courses) {
+		int requiredCredits = 0;
+		for(CourseDto courseDto : courses) {
+			requiredCredits += courseDto.getCredit();
+		}
+		return requiredCredits;
 	}
 
 	private List<CourseDto> getCoursesMatchedArea(String area) {

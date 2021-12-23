@@ -10,5 +10,5 @@ import java.util.List;
 @AllArgsConstructor
 public class RequiredCoursesDto {
 	private String area;
-	private List<CourseDto> courses;
+	private Object requirements;
 }
