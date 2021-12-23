@@ -275,9 +275,18 @@ public class GraduationService {
 			requiredCourses.remove(new CourseDto("013805", 3));
 			requiredCourses.remove(new CourseDto("106820", 3));
 
-			// 창직 17부터 필수
+			if(studentEnter <= 16) {
+				requiredCourses.remove(new CourseDto("106827", 3));
+			}
 
 			return requiredCourses;
+		} else if(studentMajor.getName().contains("컴퓨터")) {
+			/* 자료구조 삭제 */
+			if (!requiredCourses.contains(new CourseDto("013312", 3))) {
+				requiredCourses.remove(new CourseDto("013312", 4));
+			} else if (!requiredCourses.contains(new CourseDto("013312", 4))) {
+				requiredCourses.remove(new CourseDto("013312", 3));
+			}
 		}
 		return null;
 	}
@@ -296,9 +305,5 @@ public class GraduationService {
 			requiredCredits += courseDto.getCredit();
 		}
 		return requiredCredits;
-	}
-
-	private List<CourseDto> getCoursesMatchedArea(String area) {
-		return null;
 	}
 }
