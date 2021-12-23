@@ -4,8 +4,11 @@ import com.hongikgrad.authentication.entity.User;
 import com.hongikgrad.common.hash.SHA256;
 import com.hongikgrad.course.dto.CourseDto;
 import com.hongikgrad.course.entity.*;
+import com.hongikgrad.course.repository.CourseRepository;
 import com.hongikgrad.course.repository.MajorRepository;
+import com.hongikgrad.course.repository.UserCourseRepository;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,52 +44,14 @@ public class RepositoryTest {
 	@Autowired
 	MajorRepository majorRepository;
 
+	@Autowired
+	UserCourseRepository userCourseRepository;
+
+	@Autowired
+	CourseRepository courseRepository;
+
 	public void before() {
-		User user1 = new User(sha256.hash("b615125"));
-		User user2 = new User(sha256.hash("b615150"));
-		User user3 = new User(sha256.hash("b615200"));
-		em.persist(user1);
-		em.persist(user2);
-		em.persist(user3);
-
-		List<Course> courses = new ArrayList<>();
-
-		List<String> abeek = List.of(
-			 "dragonball1",
-			 "dragonball2",
-			 "dragonball3",
-			 "dragonball4",
-			 "dragonball5",
-			 "dragonball6",
-			 "dragonball7",
-			 "MSCmath",
-			 "MSCscience",
-			 "MSCcomputer",
-			 "Required!!",
-			 "",
-			 "전선",
-			 "전필",
-			 "교선",
-			 "일교",
-			 "일선"
-		);
-
-		for(int i = 0; i < 1000; i++) {
-			String courseName = "course" + Integer.toString(i);
-			String courseNumber = "10" + Integer.toString(i);
-			Course course = new Course(courseName, i%3+1, courseNumber, abeek.get(i%abeek.size()));
-			courses.add(course);
-			em.persist(course);
-		}
-
-		User[] users = {user1, user2, user3};
-
-		for(int i = 0; i < 100; i++) {
-			  int randomNumber = (int) (Math.random() * 1000);
-
-			  UserCourse userCourse = new UserCourse(users[randomNumber % 3], courses.get(randomNumber % 1000));
-			  em.persist(userCourse);
-		}
+		User user1 = new User(sha256.hash("b615500"));
 	}
 
 	@Test
@@ -318,8 +283,86 @@ public class RepositoryTest {
 	}
 
 	@Test
-	public void test22() {
+	public void 유저가들은전공과목() {
+		String username = sha256.hash("b615125");
+		Major findMajor = majorRepository.findMajorByNameContains("전자");
+		Major engMajor = majorRepository.findMajorByNameContains("공대");
 
+		List<CourseDto> fetch = queryFactory
+				.select(
+						constructor(
+								CourseDto.class,
+								userCourse.course.name,
+								userCourse.course.number,
+								userCourse.course.abeek,
+								userCourse.course.credit
+						))
+				.from(userCourse)
+				.join(majorCourse).on(majorCourse.course.id.eq(userCourse.course.id).and(majorCourse.major.eq(findMajor).or(majorCourse.major.eq(engMajor))))
+				.where(userCourse.user.studentId.eq(username))
+				.fetch();
+
+		int totalCredit = 0;
+		for (CourseDto courseDto : fetch) {
+			System.out.println("courseDto.getName( = " + courseDto.getName());
+			totalCredit += courseDto.getCredit();
+		}
+
+		System.out.println("totalCredit = " + totalCredit);
+	}
+
+	@Test
+	public void 유저가들은전공여러개() {
+		String username = sha256.hash("b615125");
+		Major findMajor = majorRepository.findMajorByNameContains("전자");
+		Major engMajor = majorRepository.findMajorByNameContains("공대");
+
+		List<Major> majors = new ArrayList<>(List.of(
+				findMajor,
+				engMajor
+		));
+
+		List<CourseDto> fetch = queryFactory
+				.select(
+						constructor(
+								CourseDto.class,
+								userCourse.course.name,
+								userCourse.course.number,
+								userCourse.course.abeek,
+								userCourse.course.credit
+						))
+				.from(userCourse)
+				.join(majorCourse).on(majorCourse.course.id.eq(userCourse.course.id))
+				.where(userCourse.user.studentId.eq(username))
+				.fetch();
+
+		int totalCredit = 0;
+		for (CourseDto courseDto : fetch) {
+			System.out.println("courseDto.getName( = " + courseDto.getName());
+			totalCredit += courseDto.getCredit();
+		}
+
+		System.out.println("totalCredit = " + totalCredit);
+	}
+
+	@Test
+	public void 전공기초영어갖고오기() {
+		List<CourseDto> fetch = queryFactory
+				.select(
+						constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit
+						))
+				.from(course)
+				.where(course.number.eq("007114").or(course.number.eq("007115")))
+				.fetch();
+
+		for (CourseDto courseDto : fetch) {
+			System.out.println("courseDto.getName( = " + courseDto.getName());
+		}
 	}
 
 
