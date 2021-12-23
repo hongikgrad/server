@@ -11,6 +11,13 @@ import static javax.persistence.FetchType.*;
 @Entity
 @Getter
 @NoArgsConstructor
+@Table(
+        uniqueConstraints={
+                @UniqueConstraint(
+                        columnNames={"user_id","course_id"}
+                )
+        }
+)
 public class UserCourse {
 
     @Id
