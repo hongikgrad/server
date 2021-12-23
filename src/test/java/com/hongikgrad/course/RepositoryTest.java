@@ -5,6 +5,7 @@ import com.hongikgrad.common.hash.SHA256;
 import com.hongikgrad.course.dto.CourseDto;
 import com.hongikgrad.course.entity.*;
 import com.hongikgrad.course.repository.CourseRepository;
+import com.hongikgrad.course.repository.MajorCourseRepository;
 import com.hongikgrad.course.repository.MajorRepository;
 import com.hongikgrad.course.repository.UserCourseRepository;
 import com.querydsl.core.types.Projections;
@@ -49,6 +50,9 @@ public class RepositoryTest {
 
 	@Autowired
 	CourseRepository courseRepository;
+
+	@Autowired
+	MajorCourseRepository majorCourseRepository;
 
 	public void before() {
 		User user1 = new User(sha256.hash("b615500"));
@@ -362,6 +366,15 @@ public class RepositoryTest {
 
 		for (CourseDto courseDto : fetch) {
 			System.out.println("courseDto.getName( = " + courseDto.getName());
+		}
+	}
+
+	@Test
+	public void 필수전공테스트() {
+		Major computer = majorRepository.findMajorByCode("ENG_CS");
+		List<CourseDto> courses = majorCourseRepository.findRequiredCoursesByMajor(computer);
+		for (CourseDto courseDto : courses) {
+			System.out.println("courseDto.getName( = " + courseDto.getName() + " " + courseDto.getNumber() + " " + courseDto.getCredit());
 		}
 	}
 
