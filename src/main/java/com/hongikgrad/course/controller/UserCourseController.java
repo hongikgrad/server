@@ -1,8 +1,6 @@
 package com.hongikgrad.course.controller;
 
 import com.hongikgrad.course.application.CourseService;
-import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.dto.CourseResponseDto;
 import com.hongikgrad.course.dto.UserTakenCourseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,11 +27,12 @@ public class UserCourseController {
                     courseService.getUserTakenCourses(request),
                     HttpStatus.OK
             );
-        } catch (IOException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (NullPointerException e) {
             return new ResponseEntity<String>("유저의 정보를 알 수 없습니다.",
                     HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
