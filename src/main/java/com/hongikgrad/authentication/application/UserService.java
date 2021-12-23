@@ -34,10 +34,12 @@ public class UserService {
         Map<String, String> userAuthCookie = userCookieCrawler.getUserAuthCookie(loginData);
         String studentId = sha256.hash(loginDto.getId());
         String userMajor = loginDto.getMajor();
+        String studentEnterYear = convertStudentIdToEnterYear(loginDto.getId());
 
         setUserAuthCookie(userAuthCookie, response);
         setUserStudentIdCookie(studentId, response);
         setUserMajorCookie(userMajor, response);
+        setUserEnterYearCookie(studentEnterYear, response);
         saveUser(studentId);
     }
 
@@ -62,6 +64,15 @@ public class UserService {
         /* 암호화된 유저 아이디 쿠키에 넣어줌 */
         Cookie cookie = getCookie("sid", studentId);
         response.addCookie(cookie);
+    }
+
+    private void setUserEnterYearCookie(String studentEnterYear, HttpServletResponse response) {
+        Cookie cookie = getCookie("enter", studentEnterYear);
+        response.addCookie(cookie);
+    }
+
+    private String convertStudentIdToEnterYear(String studentId) {
+        return studentId.substring(0, 2).replace(studentId.charAt(0), (char) (studentId.charAt(0) - 'a'+'0'));
     }
 
     private Cookie getCookie(String key, String value) {
