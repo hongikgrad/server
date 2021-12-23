@@ -60,25 +60,18 @@ public class CourseService {
         return new UserTakenCourseDto(totalCredit, totalCount, userTakenCourses);
     }
 
-    @Transactional(readOnly = true)
-    public int getUserTakenTotalCredit(HttpServletRequest request) {
-        String studentId = cookieService.getStudentIdFromCookie(request);
-        return 0;
-    }
-
     /* 유저가 들은 과목들 클래스넷에서 가져와서 저장 */
     public void saveUserTakenCourses(HttpServletRequest request) throws IOException, NullPointerException {
         List<CourseResponseDto> userTakenCourses = userCourseCrawler.getUserTakenCoursesFromClassnet(request);
         User user = userRepository.findByStudentId(cookieService.getStudentIdFromCookie(request));
         for (CourseResponseDto userTakenCourse : userTakenCourses) {
             Course course = courseRepository.findByNumberAndAndCredit(userTakenCourse.getNumber(), userTakenCourse.getCredit());
-            UserCourse userCourse = new UserCourse(user, course);
-            userCourseRepository.save(userCourse);
+            if(course == null) {
+                System.out.println("userTakenCourse = " + userTakenCourse.getName() + " " + userTakenCourse.getNumber());
+            } else if (!userCourseRepository.existsUserTakenCourse(user, course)) {
+                userCourseRepository.save(new UserCourse(user, course));
+            }
         }
-    }
-
-    public void saveCourses(Set<Course> courses) {
-        courseRepository.saveAll(courses);
     }
 
     public void saveMajorCourses(Set<MajorCourse> majorCourses) {
