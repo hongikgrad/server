@@ -2,7 +2,6 @@ package com.hongikgrad.graduation.controller;
 
 import com.hongikgrad.graduation.application.GraduationService;
 import com.hongikgrad.graduation.dto.RequirementDto;
-import com.hongikgrad.graduation.dto.RequirementDto2;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-public class GraudationController {
+public class GraduationController {
 
     private final GraduationService graduationService;
 
@@ -28,32 +27,5 @@ public class GraudationController {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-    }
-
-
-
-    @GetMapping("graduations/elective")
-    public ResponseEntity electiveRequirement(HttpServletRequest request) {
-        return null;
-    }
-
-    @GetMapping("graduations/dragonball")
-    public ResponseEntity dragonballRequirement(HttpServletRequest request) {
-        return null;
-    }
-
-    @GetMapping("graduations/msc")
-    public ResponseEntity mscRequirement(HttpServletRequest request) {
-        return null;
-    }
-
-    @GetMapping("graduations/major")
-    public ResponseEntity majorRequirement(HttpServletRequest request) {
-        return null;
-    }
-
-    @GetMapping("graduations/total")
-    public ResponseEntity totalCreditRequirement(HttpServletRequest request) {
-        return null;
     }
 }

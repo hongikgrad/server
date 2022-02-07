@@ -2,22 +2,18 @@ package com.hongikgrad.graduation.application;
 
 import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.dto.DragonballDto;
 import com.hongikgrad.course.entity.Major;
 import com.hongikgrad.course.repository.CourseRepository;
 import com.hongikgrad.course.repository.MajorCourseRepository;
 import com.hongikgrad.course.repository.MajorRepository;
 import com.hongikgrad.course.repository.UserCourseRepository;
-import com.hongikgrad.graduation.dto.RequiredCoursesDto;
+import com.hongikgrad.graduation.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -30,68 +26,13 @@ public class GraduationService {
 
 	private final CookieService cookieService;
 
-	public List<RequiredCoursesDto> getRequirementsForGraduation(HttpServletRequest request) {
-		List<RequiredCoursesDto> totalRequiredCourses = new ArrayList<>();
-		String studentId = cookieService.getStudentIdFromCookie(request);
-		int studentEnter = Integer.parseInt(cookieService.getStudentEnterFromCookie(request));
-		Major studentMajor = majorRepository.findMajorByCode(cookieService.getStudentMajorFromCookie(request));
-		List<CourseDto> userTakenCourses = userCourseRepository.findUserTakenCoursesByStudentId(studentId);
+	private List<String> writingCourseNumberList;
+	private String englishCourseNumber;
+	private List<String> specializedElectiveNumber;
 
-		List<CourseDto> userTakenAbeekCourses = userTakenCourses.stream()
-				.filter((course) -> course.getAbeek().length() >= 3 && !course.getAbeek().contains("MSC"))
-				.collect(Collectors.toList());
-
-		List<CourseDto> userTakenMSCCourses = userTakenCourses.stream()
-				.filter(course -> course.getAbeek().contains("MSC"))
-				.collect(Collectors.toList());
-
-		List<CourseDto> userTakenMajorCourses = userCourseRepository.findUserTakenMajorCoursesByStudentId(studentId, studentMajor);
-
-		/* abeek(영어, 글쓰기, 드래곤볼) 검사 */
-		Map<String, Object> requiredAbeekCourses = getRequiredAbeekCourses(userTakenAbeekCourses);
-		totalRequiredCourses.add(new RequiredCoursesDto("교양", requiredAbeekCourses));
-
-		/* MSC 검사 */
-		Map<String, Integer> mscRequiredCredits = getNotTakenMSCAreas(userTakenMSCCourses);
-		totalRequiredCourses.add(new RequiredCoursesDto("requiredMSCCredits", mscRequiredCredits));
-
-		List<CourseDto> mscRequiredCourses = getNotTakenRequiredMSCCourses(userTakenMSCCourses, studentMajor, studentEnter);
-		totalRequiredCourses.add(new RequiredCoursesDto("requiredMSCCourses", mscRequiredCourses));
-
-		/* 필수 전공 검사 */
-		List<CourseDto> majorRequirements = getNotTakenRequiredMajors(userTakenMajorCourses, studentMajor, studentEnter);
-		totalRequiredCourses.add(new RequiredCoursesDto("requiredMajorCourses", majorRequirements));
-
-		/* 전공 학점 검사 */
-		int totalMajorCredits = getUserTakenTotalMajorCredits(userTakenMajorCourses);
-		totalRequiredCourses.add(new RequiredCoursesDto("totalMajorCredits", totalMajorCredits));
-
-		int requiredMajorCredits = Math.max(50 - totalMajorCredits, 0);
-		totalRequiredCourses.add(new RequiredCoursesDto("requiredMajorCredits", requiredMajorCredits));
-
-		/* 전체 학점 검사 */
-		int totalCredits = getUserTakenTotalCredits(userTakenCourses);
-		totalRequiredCourses.add(new RequiredCoursesDto("totalCredits", totalCredits));
-
-		int requiredTotalCredits = Math.max(132 - totalCredits, 0);
-		totalRequiredCourses.add(new RequiredCoursesDto("requiredTotalCredits", requiredTotalCredits));
-
-		return totalRequiredCourses;
-	}
-
-	private Map<String, Object> getRequiredAbeekCourses(List<CourseDto> courses) {
-		Map<String, Object> requirements = new HashMap<>();
-		List<String> requiredAreas = new ArrayList<>(List.of(
-				"역사와문화",
-				"언어와철학",
-				"사회와경제",
-				"법과생활",
-				"공학의이해",
-				"제2외국어와한문",
-				"예술과디자인"
-		));
-
-		List<String> writingCourseNumbers = new ArrayList<>(List.of(
+	@PostConstruct
+	public void init() {
+		writingCourseNumberList = new ArrayList<>(List.of(
 				"001011",
 				"001012",
 				"001013",
@@ -101,209 +42,544 @@ public class GraduationService {
 				"001021",
 				"001022"
 		));
-
-		String englishCourseNumber = "001009";
-		List<String> majorEnglishCourseNumbers = new ArrayList<>(List.of(
-				"007114",
-				"007115"
-		));
-
-		boolean isEnglishTaken = false;
-		boolean isMajorEnglishTaken = false;
-		boolean isWritingTaken = false;
-
-		for (CourseDto course : courses) {
-			String courseNumber = course.getNumber();
-			String courseAbeek = course.getAbeek();
-			boolean removed = requiredAreas.removeIf(area -> area.equals(courseAbeek));
-			if (!removed && writingCourseNumbers.contains(courseNumber)) {
-				isWritingTaken = true;
-			} else if(!isMajorEnglishTaken && majorEnglishCourseNumbers.contains(courseNumber)) {
-				isMajorEnglishTaken = true;
-			} else if(!isEnglishTaken && englishCourseNumber.equals(courseNumber)) {
-				isEnglishTaken = true;
-			}
-		}
-
-		/**
-		 * 1. 예술들음, 나머지 5개들음 -> 역사 들어야됨
-		 * 2. 에술들음 나머지 4개들음. 제2외국어, 역사 남음 -> 제2외국어만 들으면됨
-		 * 3. 둘다안들음, 나머지 5개들음 -> 외궈 예술 둘다 들어야됨
-		 */
-
-		List<DragonballDto> dragonballs = new ArrayList<>();
-
-		int currentSize = 7 - requiredAreas.size();
-
-		if(requiredAreas.contains("제2외국어와한문")) {
-			List<CourseDto> coursesByAbeek = courseRepository.findCoursesByAbeek("제2외국어와한문");
-			dragonballs.add(new DragonballDto("제2외국어와한문", true, coursesByAbeek));
-			currentSize += 1;
-			requiredAreas.remove("제2외국어와한문");
-		}
-
-		if(requiredAreas.contains("예술과디자인")) {
-			List<CourseDto> coursesByAbeek = courseRepository.findCoursesByAbeek("예술과디자인");
-			dragonballs.add(new DragonballDto("예술과디자인", true, coursesByAbeek));
-			currentSize += 1;
-			requiredAreas.remove("예술과디자인");
-		}
-
-		if(currentSize < 6) {
-			for(String area : requiredAreas) {
-				List<CourseDto> coursesByAbeek = courseRepository.findCoursesByAbeek(area);
-				dragonballs.add(new DragonballDto(area, false, coursesByAbeek));
-			}
-		}
-
-		requirements.put("드래곤볼", dragonballs);
-
-		if(!isWritingTaken) {
-			List<CourseDto> writingCourses = courseRepository.findWritingCourses();
-			requirements.put("글쓰기", writingCourses);
-		}
-
-		if(!isMajorEnglishTaken) {
-			List<CourseDto> majorEnglishCourses = courseRepository.findMajorEnglishCourses();
-			requirements.put("전공기초영어", majorEnglishCourses);
-		}
-
-		if(!isEnglishTaken) {
-			List<CourseDto> englishCourse = courseRepository.findEnglishCourse();
-			requirements.put("영어", englishCourse);
-		}
-
-		return requirements;
+		englishCourseNumber = "001009";
+		specializedElectiveNumber = new ArrayList<>(List.of("008751", "008752"));
 	}
 
-	private Map<String, Integer> getNotTakenMSCAreas(List<CourseDto> courses) {
-		Map<String, Integer> requirements = new HashMap<String, Integer>(Map.of(
-				"MSC수학", 9,
-				"MSC과학", 9,
-				"MSC전산", 6
-		));
+	public List<RequirementDto> getGraduationRequirementTestResult(HttpServletRequest request) {
+		List<RequirementDto> result = new ArrayList<>();
+		StudentDto student = getStudent(request);
 
-		courses.forEach(course -> {
-			String area = course.getAbeek();
-			Integer credit = requirements.get(course.getAbeek()) - course.getCredit();
-			requirements.put(area, credit);
-		});
+		// 전공기초영어
+		checkMajorBasicEnglish(student, result);
 
-		if (requirements.get("MSC수학") <= 0) {
-			requirements.remove("MSC수학");
-		}
+		// 영어, 글쓰기
+		checkBasicElective(student, result);
 
-		if (requirements.get("MSC과학") <= 0) {
-			requirements.remove("MSC과학");
-		}
+		// 드래곤볼
+		checkDragonball(student, result);
 
-		if (requirements.get("MSC전산") <= 0) {
-			requirements.remove("MSC전산");
-		}
+		// MSC
+		checkMSC(student, result);
 
-		return requirements;
+		// 특성화교양
+		checkSpecializedElective(student, result);
+
+		// 필수전공
+		checkRequiredMajor(student, result);
+
+		// 전공학점
+		checkMajorCredit(student, result);
+
+		// 전체학점
+		checkTotalCredit(student, result);
+
+		return result;
 	}
 
-	private List<CourseDto> getNotTakenRequiredMSCCourses(List<CourseDto> courses, Major studentMajor, int studentEnter) {
-		List<CourseDto> requiredCourses = majorCourseRepository.findRequiredMSCCourse();
-		String majorName = studentMajor.getName();
-		//			requiredCourses.add("012104"); //대학물리2 *
-//			requiredCourses.add("012106"); //대학물리2실험 *
-//
-//			requiredCourses.add("012107"); //대학화학1 *
-//			requiredCourses.add("012109"); //대학화학1실험 *
-//
-//			requiredCourses.add("012110"); //대학화학2
-//			requiredCourses.add("012113"); //대학화학2실험
-//
-//			requiredCourses.add("012101"); //대학물리1
-//			requiredCourses.add("012103"); //대학물리1실험
-
-		if(majorName.contains("전자")) {
-			// 16-22학번
-			for(CourseDto courseDto : courses) {
-				String courseNumber = courseDto.getNumber();
-				requiredCourses.removeIf(course -> course.getNumber().equals(courseNumber));
+	private void checkMajorBasicEnglish(StudentDto student, List<RequirementDto> result) {
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		for (CourseDto course : takenCourses) {
+			if (isMajorBasicEnglish(course)) {
+				takeMajorBasicEnglish(course, result);
+				return;
 			}
-			if(!requiredCourses.contains(new CourseDto("012110", 3))
-					&& !requiredCourses.contains(new CourseDto("012113", 1))) {
-				requiredCourses.removeIf(course -> course.getNumber().equals("012101") || course.getNumber().equals("012103"));
-			} else if (!requiredCourses.contains(new CourseDto("012101", 3))
-					&& !requiredCourses.contains(new CourseDto("012103", 1))) {
-				requiredCourses.removeIf(course -> course.getNumber().equals("012110") || course.getNumber().equals("012113"));
-			}
-		} else if(majorName.contains("컴퓨터")) {
-			// 컴공 비공학
-
-		} else if(majorName.contains("기계")) {
-			// 기계 공학
-
-		} else if(majorName.contains("화학")) {
-			// 화공 비공학
-
-		} else if(majorName.contains("신소재")) {
-			// 신소재 비공학
-
-		} else if(majorName.contains("산업공")) {
-			// 산공 공학
-
 		}
-
-		return requiredCourses;
+		notTakeMajorBasicEnglish(result);
 	}
 
-	private List<CourseDto> getNotTakenRequiredMajors(List<CourseDto> courses, Major studentMajor, int studentEnter) {
-		List<CourseDto> requiredCourses = majorCourseRepository.findRequiredCoursesByMajor(studentMajor);
-		for(CourseDto courseDto : courses) {
-			requiredCourses.removeIf(course -> course.getName().equals(courseDto.getName()));
-		}
+	private void checkBasicElective(StudentDto student, List<RequirementDto> result) {
+		SubField writingCategory = new SubField("글쓰기", new ArrayList<>(), 0, false);
+		SubField englishCategory = new SubField("영어", new ArrayList<>(), 0, false);
 
-		if(studentMajor.getName().contains("전자")) {
-			if (!requiredCourses.contains(new CourseDto("013704", 2))) {
-				requiredCourses.remove(new CourseDto("106824", 3));
-			}
-
-			if (!requiredCourses.contains(new CourseDto("013805", 3))) {
-				requiredCourses.remove(new CourseDto("106825", 3));
-			}
-
-			if (!requiredCourses.contains(new CourseDto("106820", 3))) {
-				requiredCourses.remove(new CourseDto("106827", 3));
-			}
-
-			requiredCourses.remove(new CourseDto("013704", 2));
-			requiredCourses.remove(new CourseDto("013805", 3));
-			requiredCourses.remove(new CourseDto("106820", 3));
-
-			if(studentEnter <= 16) {
-				requiredCourses.remove(new CourseDto("106827", 3));
-			}
-
-			return requiredCourses;
-		} else if(studentMajor.getName().contains("컴퓨터")) {
-			/* 자료구조 삭제 */
-			if (!requiredCourses.contains(new CourseDto("013312", 3))) {
-				requiredCourses.remove(new CourseDto("013312", 4));
-			} else if (!requiredCourses.contains(new CourseDto("013312", 4))) {
-				requiredCourses.remove(new CourseDto("013312", 3));
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		for (CourseDto course : takenCourses) {
+			if (isWritingCourse(course)) {
+				takeCourse(course, writingCategory);
+			} else if (isEnglishCourse(course)) {
+				takeCourse(course, englishCategory);
 			}
 		}
+
+		List<SubField> subFields = combineSubFields(writingCategory, englishCategory);
+		Integer totalCredit = getTotalCreditFromSubField(subFields);
+		boolean isSatisfied = (writingCategory.getTotalCredit() > 1) && (englishCategory.getTotalCredit() > 1);
+
+		RequirementDto requirement = new RequirementDto(
+				"기초교양",
+				totalCredit,
+				"기초교양(6학점)",
+				isSatisfied,
+				subFields
+		);
+		result.add(requirement);
+	}
+
+	private void checkDragonball(StudentDto student, List<RequirementDto> result) {
+		Map<String, SubField> subFieldMap = getDragonballSubFields();
+		List<SubField> subFieldList = new ArrayList<>(subFieldMap.values());
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		for (CourseDto course : takenCourses) {
+			String abeek = course.getAbeek();
+			if (isDragonball(abeek)) {
+				SubField subField = subFieldMap.get(abeek);
+				takeCourse(course, subField);
+			}
+		}
+
+		int count = getDragonballCount(subFieldMap);
+		int totalCredit = getTotalCreditFromSubField(subFieldList);
+
+		String brifing = "‘예술과 디자인’, ‘제2외국어와 한문’영역을 반드시 포함하여 7개 영역 중 6개 영역을 선택하여 각 영역별 1과목 이상 이수하여야 함.";
+
+		boolean isSatisfied = (subFieldMap.get("예술과디자인").getTotalCredit() > 1)
+				&& (subFieldMap.get("제2외국어와한문").getTotalCredit() > 1)
+				&& (count >= 4);
+
+		RequirementDto requirement = new RequirementDto(
+				"드래곤볼",
+				totalCredit,
+				brifing,
+				isSatisfied,
+				subFieldList
+		);
+		result.add(requirement);
+	}
+
+	private void checkMSC(StudentDto student, List<RequirementDto> result) {
+		Map<String, SubField> subFieldMap = getMSCSubFields();
+		List<SubField> subFieldList = new ArrayList<>(subFieldMap.values());
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		for (CourseDto course : takenCourses) {
+			if (isAbeekCourse(course)) {
+				String abeek = course.getAbeek();
+				SubField subField = subFieldMap.get(abeek);
+				takeCourse(course, subField);
+			}
+		}
+
+		int totalCredit = getTotalCreditFromSubField(subFieldList);
+		String briefing = getMSCBriefing(student);
+		boolean isSatisfied = isSatisfiedMSC(student, subFieldMap);
+
+		RequirementDto requirement = new RequirementDto(
+				"MSC",
+				totalCredit,
+				briefing,
+				isSatisfied,
+				subFieldList
+		);
+		result.add(requirement);
+	}
+
+	private void checkSpecializedElective(StudentDto student, List<RequirementDto> result) {
+		if (student.getEnterYear() < 2019) return;
+		SubField subField = new SubField("특성화교양", new ArrayList<>(), 0, false);
+
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		for (CourseDto course : takenCourses) {
+			if (isSpecializedElective(course)) {
+				takeCourse(course, subField);
+			}
+		}
+
+		Integer totalCredit = getTotalCreditFromSubField(subField);
+		boolean isSatisfied = subField.getTotalCredit() > 1;
+		String briefing = "특성화교양(디자인씽킹, 창업과 실용법률) 중 한 과목을 반드시 이수하여야 함.";
+
+		RequirementDto requirement = new RequirementDto(
+				"특성화교양",
+				totalCredit,
+				briefing,
+				isSatisfied,
+				subField
+		);
+		result.add(requirement);
+	}
+
+	private void checkRequiredMajor(StudentDto student, List<RequirementDto> result) {
+		Major major = student.getMajor();
+		SubField requiredMajor = new SubField("전공필수", new ArrayList<>(), 0, false);
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		List<CourseDto> requiredCourse = getRequiredCourse(major);
+		for (CourseDto course : takenCourses) {
+			if (isRequiredMajor(course, requiredCourse)) {
+				takeCourse(course, requiredMajor);
+			}
+		}
+
+		int totalCredit = getTotalCreditFromSubField(requiredMajor);
+		String briefing = "각 학과마다 지정된 전공필수 과목을 확인하세요!";
+
+		boolean isSatisfied = checkRequireMajorSatisfaction(student);
+		RequirementDto requirement = new RequirementDto(
+				"전공필수",
+				totalCredit,
+				briefing,
+				isSatisfied,
+				requiredMajor
+		);
+		result.add(requirement);
+	}
+
+	private void checkMajorCredit(StudentDto student, List<RequirementDto> result) {
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		Major studentMajor = student.getMajor();
+		List<CourseDto> majorCourses = majorCourseRepository.findCoursesByMajor(studentMajor);
+
+		int totalCredit = 0;
+		for (CourseDto course : takenCourses) {
+			if (majorCourses.contains(course)) {
+				totalCredit += course.getCredit();
+			}
+		}
+
+		boolean isSatisfied = totalCredit >= 50;
+
+		RequirementDto requirement = new RequirementDto(
+				"전공 수강학점",
+				totalCredit,
+				"전공(전공필수 모두 포함하여 50학점)을 이수하여야 함.",
+				isSatisfied
+		);
+
+		result.add(requirement);
+	}
+
+	private void checkTotalCredit(StudentDto student, List<RequirementDto> result) {
+		List<CourseDto> takenCourses = student.getTakenCourses();
+
+		int totalCredit = 0;
+		for (CourseDto takenCourse : takenCourses) {
+			totalCredit += takenCourse.getCredit();
+		}
+
+		boolean isSatisfied = totalCredit >= 132;
+
+		RequirementDto requirement = new RequirementDto(
+				"전체 수강학점",
+				totalCredit,
+				"총 132학점 이상(일반선택 포함) 이수하여야 함.",
+				isSatisfied
+		);
+
+		result.add(requirement);
+	}
+
+	private void takeCourse(CourseDto course, SubField subField) {
+		List<CourseDto> courseList = subField.getCourseList();
+		courseList.add(course);
+		subField.setTotalCredit(subField.getTotalCredit() + course.getCredit());
+	}
+
+	private boolean isSatisfiedMSC(StudentDto student, Map<String, SubField> subFieldMap) {
+		String majorCode = student.getMajor().getCode();
+		int enterYear = student.getEnterYear();
+		boolean isAbeek = student.isAbeek();
+		List<CourseDto> takenCourses = student.getTakenCourses();
+
+		SubField math = subFieldMap.get("MSC수학");
+		SubField science = subFieldMap.get("MSC과학");
+		SubField computer = subFieldMap.get("MSC전산");
+
+		Integer mathCredit = math.getTotalCredit();
+		Integer scienceCredit = science.getTotalCredit();
+		Integer computerCredit = computer.getTotalCredit();
+
+		if (isAbeek) {
+			// 전체 학점 검사
+			if (mathCredit < 9 || scienceCredit < 8 || computerCredit < 6
+					|| mathCredit + scienceCredit + computerCredit < 30) {
+				return false;
+			}
+
+			// 필수이수과목 검사
+			if (majorCode.equals("ENG_EE")) {
+				if (hasTakenPhysics2(takenCourses) && hasTakenChemistry1(takenCourses)
+						&& (hasTakenPhysics2(takenCourses) || hasTakenChemistry2(takenCourses))) {
+					return true;
+				}
+			} else {
+				int takenCount = 0;
+				if (hasTakenPhysics1(takenCourses)) takenCount += 1;
+				if (hasTakenPhysics2(takenCourses)) takenCount += 1;
+				if (hasTakenChemistry1(takenCourses)) takenCount += 1;
+				if (hasTakenChemistry2(takenCourses)) takenCount += 1;
+				if (takenCount >= 2) {
+					return true;
+				}
+				return false;
+			}
+		} else {
+			// abeek 비인증
+			// 전체 학점 검사
+			if (majorCode.equals("ENG_CS")) {
+				if (mathCredit < 9 || scienceCredit < 9) return false;
+			} else {
+				if (mathCredit < 9 || scienceCredit < 9 || computerCredit < 6) return false;
+			}
+
+			// 필수이수과목 검사
+			if (majorCode.equals("ENG_EE")) {
+				if (hasTakenPhysics2(takenCourses) && hasTakenChemistry1(takenCourses)
+						&& (hasTakenPhysics2(takenCourses) || hasTakenChemistry2(takenCourses))) {
+					return true;
+				}
+				return false;
+			} else if (enterYear >= 20 && majorCode.equals("ENG_CS")) {
+				int takenCount = 0;
+				if (hasTakenInformationSystem(takenCourses)) takenCount += 1;
+				if (hasTakenOOP(takenCourses)) takenCount += 1;
+				if (hasTakenCProgramming(takenCourses)) takenCount += 1;
+
+				if (takenCount >= 2) {
+					return true;
+				}
+				return false;
+
+			} else if (enterYear >= 20 && majorCode.equals("ENG_IE")) {
+				int takeCount = 0;
+				if (hasTakenInformationSystem(takenCourses)) takeCount += 1;
+				if (hasTakenWebProgramming(takenCourses)) takeCount += 1;
+				if (hasTakenCProgramming(takenCourses)) takeCount += 1;
+
+				if (takeCount >= 2) {
+					return true;
+				}
+				return false;
+			} else {
+				if (hasTakenPhysics1(takenCourses) && hasTakenChemistry1(takenCourses)
+						&& (hasTakenPhysics2(takenCourses) || hasTakenChemistry2(takenCourses))) {
+					return true;
+				}
+				return false;
+			}
+		}
+		return false;
+	}
+
+	private String getMSCBriefing(StudentDto student) {
+		String majorCode = student.getMajor().getCode();
+		int enterYear = student.getEnterYear();
+		boolean isAbeek = student.isAbeek();
+
+		if (isAbeek) {
+			if (majorCode.equals("ENG_EE")) {
+				return "분야별 최소이수학점(과학 8학점, 수학 9학점, 전산 6학점)을 포함하여 30학점 이상 이수하여야 함." +
+						"MSC 과학분야 중" +
+						"대학물리(2), 대학물리실험(2), 대학화학(1), 대학화학실험(1)을 반드시 이수하여야 하고," +
+						"{대학물리(1),대학물리실험(1)} 와｛대학화학(2), 대학화학실험(2)｝둘 중 택일하여 이수하여야 함.";
+			}
+			return "분야별 최소이수학점(과학 8학점, 수학 9학점, 전산 6학점)을 포함하여 30학점 이상 이수하여야 함." +
+					"MSC 과학분야 중" +
+					"{대학물리(1), 대학물리실험(1)}, {대학화학(1), 대학화학실험(1)}, {대학물리(2), 대학물리실험(2),}, {대학화학(2), 대학화학실험(2)}" +
+					"4Set 중 2Set를 선택하여 이수하여야 함.";
+		} else {
+			if (majorCode.equals("ENG_EE")) {
+				return "24학점 이상 이수하여야 함." +
+						"MSC 과학분야 중" +
+						"대학물리(2), 대학물리실험(2), 대학화학(1), 대학화학실험(1)을 반드시 이수하여야 하고," +
+						"{대학물리(1),대학물리실험(1)} 와 {대학화학(2), 대학화학실험(2)} 둘 중 택일하여 이수하여야 함.";
+			} else if (enterYear >= 20) {
+				if (majorCode.equals("ENG_CS")) {
+					return "MSC 과학분야 내 상기의 대학화학, 대학물리에 대한 별도 이수 요건 없이 MSC 수학분야 및 과학분야 내 과목 이수학점 합이 18학점 이상 되면 인정함." +
+							"<정보시스템개론, 객체지향프로그래밍, C-프로그래밍> 중 6학점을 이수해야 함.";
+				} else if (majorCode.equals("ENG_IE")) {
+					return "MSC 과학분야 내 상기의 대학화학, 대학물리에 대한 별도 이수 요건 없이 MSC 수학분야 및 과학분야 내 과목 이수학점 합이 18학점 이상 되면 인정함." +
+							"<정보시스템개론, 웹프로그래밍, C-프로그래밍> 중 6학점을 이수해야 함.";
+				}
+			} else {
+				return "24학점 이상 이수하여야 함. (단, 컴퓨터공학전공은 18학점 이상)" +
+						"MSC 과학분야 중" +
+						"대학물리(1), 대학물리실험(1), 대학화학(1), 대학화학실험(1)을 반드시 이수하여야 하고,\n" +
+						"{대학물리(2), 대학물리실험(2)} 와 {대학화학(2), 대학화학실험(2)} 둘 중 택일하여 이수하여야 함.";
+			}
+		}
+
 		return null;
 	}
 
-	private int getUserTakenTotalMajorCredits(List<CourseDto> courses) {
-		int totalCredits = 0;
-		for(CourseDto course : courses) {
-			totalCredits += course.getCredit();
-		}
-		return totalCredits;
+	private void notTakeMajorBasicEnglish(List<RequirementDto> result) {
+		RequirementDto requirement = RequirementDto.builder()
+				.mainField("전공기초영어")
+				.briefing("전공기초영어(Ⅰ/Ⅱ) 중 한 과목을 반드시 이수하여야 함.")
+				.isSatisfied(false)
+				.totalCredit(0)
+				.build();
+		result.add(requirement);
 	}
 
-	private int getUserTakenTotalCredits(List<CourseDto> courses) {
-		int requiredCredits = 0;
-		for(CourseDto courseDto : courses) {
-			requiredCredits += courseDto.getCredit();
+	private void takeMajorBasicEnglish(CourseDto course, List<RequirementDto> result) {
+		RequirementDto requirement = RequirementDto.builder()
+				.mainField("전공기초영어")
+				.briefing("전공기초영어(Ⅰ/Ⅱ) 중 한 과목을 반드시 이수하여야 함.")
+				.isSatisfied(true)
+				.totalCredit(course.getCredit())
+				.subField(List.of(new SubField("전공기초영어", List.of(course), course.getCredit(), true)))
+				.build();
+		result.add(requirement);
+	}
+
+	private boolean isMajorBasicEnglish(CourseDto course) {
+		String majorBasicEnglish1Number = "007114";
+		String majorBasicEnglish2Number = "007115";
+		if (course.getNumber().equals(majorBasicEnglish1Number)
+				|| course.getNumber().equals(majorBasicEnglish2Number)) {
+			return true;
 		}
-		return requiredCredits;
+		return false;
+	}
+
+	private boolean isEnglishCourse(CourseDto course) {
+		return course.getNumber().equals(englishCourseNumber);
+	}
+
+	private boolean isWritingCourse(CourseDto course) {
+		String courseNumber = course.getNumber();
+		for (String writingCourseNumber : writingCourseNumberList) {
+			if (writingCourseNumber.equals(courseNumber)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isDragonball(String abeek) {
+		return !(abeek.length() <= 3 || abeek.contains("MSC") || abeek.contains("교양"));
+	}
+
+	private Map<String, SubField> getMSCSubFields() {
+		SubField math = new SubField("MSC수학", new ArrayList<>(), 0, false);
+		SubField science = new SubField("MSC과학", new ArrayList<>(), 0, false);
+		SubField computer = new SubField("MSC전산", new ArrayList<>(), 0, false);
+
+		Map<String, SubField> subFields = new HashMap<>();
+		subFields.put("MSC수학", math);
+		subFields.put("MSC과학", science);
+		subFields.put("MSC전산", computer);
+		return subFields;
+	}
+
+	private boolean checkRequireMajorSatisfaction(StudentDto student) {
+		return false;
+	}
+
+	private boolean hasTakenPhysics1(List<CourseDto> courses) {
+		return courses.contains(new CourseDto("012101", 3)) && courses.contains(new CourseDto("012103", 1));
+	}
+
+	private boolean hasTakenPhysics2(List<CourseDto> courses) {
+		return courses.contains(new CourseDto("012104", 3)) && courses.contains(new CourseDto("012106", 1));
+	}
+
+	private boolean hasTakenChemistry1(List<CourseDto> courses) {
+		return courses.contains(new CourseDto("012107", 3)) && courses.contains(new CourseDto("012109", 1));
+	}
+
+	private boolean hasTakenChemistry2(List<CourseDto> courses) {
+		return courses.contains(new CourseDto("012110", 3)) && courses.contains(new CourseDto("012113", 1));
+	}
+
+	private StudentDto getStudent(HttpServletRequest request) {
+		// TODO: 공학 비공학 체크!
+		return StudentDto.builder()
+				.enterYear(getStudentEnterYear(request))
+				.major(getStudentMajor(request))
+				.takenCourses(getUserTakenCourses(request))
+				.isAbeek(false)
+				.build();
+	}
+
+	private List<CourseDto> getUserTakenCourses(HttpServletRequest request) {
+		String studentId = cookieService.getStudentIdFromCookie(request);
+		return userCourseRepository.findUserTakenCoursesByStudentId(studentId);
+	}
+
+	private List<SubField> combineSubFields(SubField... subFields) {
+		return Arrays.asList(subFields);
+	}
+
+	private Integer getTotalCreditFromSubField(List<SubField> subFields) {
+		Integer totalCredit = 0;
+		for (SubField subField : subFields) {
+			totalCredit += subField.getTotalCredit();
+		}
+		return totalCredit;
+	}
+
+	private Integer getTotalCreditFromSubField(SubField subField) {
+		return subField.getTotalCredit();
+	}
+
+	private int getDragonballCount(Map<String, SubField> subFields) {
+		// 예술과디자인, 제2외국어와한문 영역 제외
+		int count = 0;
+		for (String key : subFields.keySet()) {
+			SubField subField = subFields.get(key);
+			String abeek = subField.getField();
+			if (abeek.contains("예술") || abeek.contains("외국어")) continue;
+			if (subField.getTotalCredit() > 1) count += 1;
+		}
+		return count;
+	}
+
+	private Map<String, SubField> getDragonballSubFields() {
+		SubField history = new SubField("역사와문화", new ArrayList<>(), 0, false);
+		SubField language = new SubField("언어와철학", new ArrayList<>(), 0, false);
+		SubField society = new SubField("사회와경제", new ArrayList<>(), 0, false);
+		SubField law = new SubField("법과생활", new ArrayList<>(), 0, false);
+		SubField engineering = new SubField("공학의이해", new ArrayList<>(), 0, false);
+		SubField foreign = new SubField("제2외국어와한문", new ArrayList<>(), 0, false);
+		SubField artDesign = new SubField("예술과디자인", new ArrayList<>(), 0, false);
+
+		Map<String, SubField> subFields = new HashMap<>();
+		subFields.put("역사와문학", history);
+		subFields.put("언어와철학", language);
+		subFields.put("사회와경제", society);
+		subFields.put("법과생활", law);
+		subFields.put("공학의이해", engineering);
+		subFields.put("제2외국어와한문", foreign);
+		subFields.put("예술과디자인", artDesign);
+		return subFields;
+	}
+
+	private boolean isAbeekCourse(CourseDto course) {
+		return course.getAbeek().contains("MSC");
+	}
+
+	private boolean isSpecializedElective(CourseDto course) {
+		return specializedElectiveNumber.contains(course.getNumber());
+	}
+
+	private boolean isRequiredMajor(CourseDto course, List<CourseDto> requiredCourses) {
+		return requiredCourses.contains(course);
+	}
+
+	private List<CourseDto> getRequiredCourse(Major major) {
+		return majorCourseRepository.findRequiredCoursesByMajor(major);
+	}
+
+	private int getStudentEnterYear(HttpServletRequest request) {
+		return Integer.parseInt(cookieService.getStudentEnterFromCookie(request));
+	}
+
+	private Major getStudentMajor(HttpServletRequest request) {
+		return majorRepository.findMajorByCode(cookieService.getStudentMajorFromCookie(request));
+	}
+
+	private boolean hasTakenInformationSystem(List<CourseDto> takenCourses) {
+		return takenCourses.contains(new CourseDto("012304", 3));
+	}
+
+	private boolean hasTakenOOP(List<CourseDto> takenCourses) {
+		return takenCourses.contains(new CourseDto("012305", 3));
+	}
+
+	private boolean hasTakenCProgramming(List<CourseDto> takenCourses) {
+		return takenCourses.contains(new CourseDto("101810", 3));
+	}
+
+	private boolean hasTakenWebProgramming(List<CourseDto> takenCourses) {
+		return takenCourses.contains(new CourseDto("012306", 3));
 	}
 }
