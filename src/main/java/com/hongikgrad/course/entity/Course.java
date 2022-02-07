@@ -35,6 +35,9 @@ public class Course {
     @Column(name = "course_abeek")
     private String abeek;
 
+    @Column(name = "latest_semester")
+    private String semester;
+
     public Course(String name, int credit, String number) {
         this.name = name;
         this.credit = credit;
@@ -47,6 +50,18 @@ public class Course {
         this.credit = credit;
         this.number = number;
         this.abeek = abeek;
+    }
+
+    public Course(String name, int credit, String number, String abeek, String semester) {
+        this.name = name;
+        this.credit = credit;
+        this.number = number;
+        this.abeek = abeek;
+        this.semester = semester;
+    }
+
+    public void changeSemester(String semester) {
+        this.semester = semester;
     }
 
     @Override
