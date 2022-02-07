@@ -40,7 +40,7 @@ public class MajorCourseRepositoryImpl implements MajorCourseCustom {
 	}
 
 	@Override
-	public List<CourseDto> findRequiredMSCCourse() {
+	public List<CourseDto> findRequiredScienceCourses() {
 		return queryFactory
 				.select(
 						Projections.constructor(
@@ -56,4 +56,22 @@ public class MajorCourseRepositoryImpl implements MajorCourseCustom {
 						.or(course.name.contains("대학화학")))
 				.fetch();
 	}
+
+	@Override
+	public List<CourseDto> findCoursesByMajor(Major studentMajor) {
+		return queryFactory
+				.select(
+						Projections.constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit
+						))
+				.from(majorCourse)
+				.where(majorCourse.major.eq(studentMajor))
+				.join(majorCourse.course, course)
+				.fetch();
+	}
+
 }

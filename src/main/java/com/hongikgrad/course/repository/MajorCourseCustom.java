@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface MajorCourseCustom {
 	public List<CourseDto> findRequiredCoursesByMajor(Major studentMajor);
-	public List<CourseDto> findRequiredMSCCourse();
+	public List<CourseDto> findRequiredScienceCourses();
+	public List<CourseDto> findCoursesByMajor(Major studentMajor);
 }
