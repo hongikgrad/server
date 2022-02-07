@@ -6,12 +6,10 @@ import com.hongikgrad.authentication.repository.UserRepository;
 import com.hongikgrad.common.crawler.UserCookieCrawler;
 import com.hongikgrad.common.hash.SHA256;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import javax.naming.AuthenticationException;
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -44,30 +42,31 @@ public class UserService {
     }
 
     private void saveUser(String studentId) {
-        if(userRepository.existsUserByStudentId(studentId)) return;
-        userRepository.save(new User(studentId));
+        if(!userRepository.existsUserByStudentId(studentId)) {
+            userRepository.save(new User(studentId));
+        }
     }
 
     private void setUserMajorCookie(String major, HttpServletResponse response) {
-        Cookie cookie = getCookie("major", major);
+        Cookie cookie = makeCookie("major", major);
         response.addCookie(cookie);
     }
 
     private void setUserAuthCookie(Map<String, String> userAuthCookie, HttpServletResponse response) {
         userAuthCookie.forEach((key, value) -> {
-            Cookie cookie = getCookie(key, value);
+            Cookie cookie = makeCookie(key, value);
             response.addCookie(cookie);
         });
     }
 
     private void setUserStudentIdCookie(String studentId, HttpServletResponse response) {
         /* 암호화된 유저 아이디 쿠키에 넣어줌 */
-        Cookie cookie = getCookie("sid", studentId);
+        Cookie cookie = makeCookie("sid", studentId);
         response.addCookie(cookie);
     }
 
     private void setUserEnterYearCookie(String studentEnterYear, HttpServletResponse response) {
-        Cookie cookie = getCookie("enter", studentEnterYear);
+        Cookie cookie = makeCookie("enter", studentEnterYear);
         response.addCookie(cookie);
     }
 
@@ -75,7 +74,7 @@ public class UserService {
         return studentId.substring(0, 2).replace(studentId.charAt(0), (char) (studentId.charAt(0) - 'a'+'0'));
     }
 
-    private Cookie getCookie(String key, String value) {
+    private Cookie makeCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(60*60*24);
         cookie.setSecure(true);

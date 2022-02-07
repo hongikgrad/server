@@ -15,12 +15,15 @@ import com.hongikgrad.course.repository.MajorCourseRepository;
 import com.hongikgrad.course.repository.MajorRepository;
 import com.hongikgrad.course.repository.UserCourseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,14 +41,27 @@ public class CourseService {
 
     private final CookieService cookieService;
 
+    private List<CourseDto> allCourses;
+
+    @PostConstruct
+    public void init() {
+        allCourses = courseRepository.findAllCourseDto();
+    }
+
+    public List<CourseDto> getAllCourses(Pageable pageable) {
+        int fromIndex = Optional.of(pageable.getOffset()).orElse(0L).intValue();
+        int toIndex = Optional.of(pageable.getOffset() + pageable.getPageSize()).orElse(0L).intValue();
+        return allCourses.subList(fromIndex, toIndex);
+    }
+
+    public List<CourseDto> searchCourses(String keyword) {
+        return allCourses.stream().filter((course) -> course.getName().contains(keyword)).collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
-    public List<CourseResponseDto> getAllCourses() {
-        List<CourseResponseDto> ret = new ArrayList<>();
-        List<Course> courses = courseRepository.findAll();
-        courses.forEach((course) -> {
-            ret.add(new CourseResponseDto(course.getName(), course.getCredit(), course.getNumber()));
-        });
-        return ret;
+    public List<CourseDto> getAllMajorCourses(String majorCode) {
+        Major studentMajor = majorRepository.findMajorByCode(majorCode.toUpperCase(Locale.ROOT));
+        return majorCourseRepository.findCoursesByMajor(studentMajor);
     }
 
     @Transactional(readOnly = true)
@@ -78,8 +94,51 @@ public class CourseService {
         majorCourseRepository.saveAll(majorCourses);
     }
 
+    public void getCoursesBySemester(String year, String hakgi) {
+        try {
+            System.out.println(year + " " + hakgi);
+            List<String> deptList = List.of(
+                    "A000", "A010", "A040", "A160", "A170", "A191", "A200",
+                    "B010", "C010", "C020", "C030", "C040", "E000", "E010", "E020", "E030", "E040", "E050",
+                    "N010", "F000", "F010", "F020", "F030", "F040", "F090", "F120", "F130", "F140", "F150", "F170",
+                    "M000", "M020", "K010", "J010", "J020"
+            );
+
+            Map<String, String> data = new HashMap<>();
+            data.put("p_ibhak", "2016");
+            data.put("p_campus", "1");
+            data.put("p_gubun", "1");
+            data.put("p_abeek", "1");
+            data.put("p_grade", "0");
+
+            data.put("p_yy", year);
+            data.put("p_hakgi", hakgi);
+
+            /* major */
+            for (String dept : deptList) {
+                data.put("p_grade", "0");
+                data.put("p_dept", dept);
+                getCoursesFromTimeTable(year + hakgi, data);
+//                majorCourses.addAll(result.getMajorCourses());
+//                courses.addAll(result.getCourses());
+            }
+
+            /* elective */
+            for (int j = 1; j <= 16; j++) {
+                String grade = Integer.toString(j);
+                data.put("p_grade", grade);
+                data.put("p_dept", "0001");
+                getCoursesFromTimeTable(year + hakgi, data);
+//                majorCourses.addAll(result.getMajorCourses());
+//                courses.addAll(result.getCourses());
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /* 홍익대 시간표 사이트에서 과목들을 크롤링해서 가져옴 */
-    public MajorCourseListDto getCoursesFromTimeTable(Map<String, String> data) throws IOException {
+    public void getCoursesFromTimeTable(String semester, Map<String, String> data) throws IOException {
         try {
             CrawlingCourseListDto result = courseCrawler.getCoursesFromTimeTable(data);
 
@@ -106,17 +165,37 @@ public class CourseService {
                 Course course;
                 course = courseRepository.findByNumberAndAndCredit(courseDto.getNumber(), courseDto.getCredit());
                 if(course == null) {
-                    course = courseRepository.save(new Course(courseDto.getName(), courseDto.getCredit(), courseDto.getNumber(), courseDto.getAbeek()));
+                    course = courseRepository.save(new Course(courseDto.getName(), courseDto.getCredit(), courseDto.getNumber(), courseDto.getAbeek(), semester));
+                } else {
+                    // 이미 존재하는 수업 학기 갱신
+                    int newSemester = Integer.parseInt(semester);
+                    int oldSemester = 0;
+                    if(course.getSemester() != null) {
+                        oldSemester = Integer.parseInt(course.getSemester());
+                    }
+                    if (newSemester > oldSemester) {
+                        course.changeSemester(semester);
+                    }
                 }
+                // 전공여부 확인
                 if(courseDto.getAbeek().contains("전") && !courseDto.getAbeek().contains("MSC")) {
                     Major major = majors.stream().filter(m -> m.getName().equals(courseDto.getMadeBy())).findFirst().get();
-                    MajorCourse majorCourse = new MajorCourse(major, course, courseDto.getAbeek().equals("전필"));
-                    majorCourses.add(majorCourse);
+                    MajorCourse findMajorCourse = majorCourseRepository.findMajorCourseByCourseAndMajor(course, major);
+                    if(findMajorCourse == null) {
+                        MajorCourse majorCourse = new MajorCourse(major, course, courseDto.getAbeek().equals("전필"));
+                        majorCourseRepository.save(majorCourse);
+                    }
+//                    majorCourses.add(majorCourse);
                 }
             }
-            return new MajorCourseListDto(majorCourses, courses);
-        } catch(IndexOutOfBoundsException ignored) {
-            return null;
+//            return new MajorCourseListDto(majorCourses, courses);
+        } catch(IndexOutOfBoundsException e) {
+            e.printStackTrace();
+//            return null;
         }
+    }
+
+    public long getAllCoursesCount() {
+        return courseRepository.count();
     }
 }
