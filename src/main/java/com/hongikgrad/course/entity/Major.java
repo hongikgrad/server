@@ -13,19 +13,32 @@ import static javax.persistence.FetchType.*;
 public class Major {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "major_id")
     private Long id;
 
-    @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "course_id")
-    private Course course;
+    @Column(name = "major_name", unique = true)
+    private String name;
 
-    @Column(nullable = false)
-    private String department;
+    @Column(name = "major_code")
+    private String code;
 
-    public Major(Course course, String department) {
-        this.course = course;
-        this.department = department;
+    // 단과대
+    @Column(name = "college")
+    private String college;
+
+    public Major(String name) {
+        this.name = name;
+    }
+
+    public Major(String name, String college) {
+        this.name = name;
+        this.college = college;
+    }
+
+    public Major(String name, String code, String college) {
+        this.name = name;
+        this.code = code;
+        this.college = college;
     }
 }

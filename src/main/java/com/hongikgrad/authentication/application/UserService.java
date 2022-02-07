@@ -31,34 +31,55 @@ public class UserService {
 
         Map<String, String> userAuthCookie = userCookieCrawler.getUserAuthCookie(loginData);
         String studentId = sha256.hash(loginDto.getId());
+        String userMajor = loginDto.getMajor();
+        String studentEnterYear = convertStudentIdToEnterYear(loginDto.getId());
+
         setUserAuthCookie(userAuthCookie, response);
         setUserStudentIdCookie(studentId, response);
+        setUserMajorCookie(userMajor, response);
+        setUserEnterYearCookie(studentEnterYear, response);
         saveUser(studentId);
     }
 
     private void saveUser(String studentId) {
-        if(userRepository.existsUserByStudentId(studentId)) return;
-        userRepository.save(new User(studentId));
+        if(!userRepository.existsUserByStudentId(studentId)) {
+            userRepository.save(new User(studentId));
+        }
+    }
+
+    private void setUserMajorCookie(String major, HttpServletResponse response) {
+        Cookie cookie = makeCookie("major", major);
+        response.addCookie(cookie);
     }
 
     private void setUserAuthCookie(Map<String, String> userAuthCookie, HttpServletResponse response) {
         userAuthCookie.forEach((key, value) -> {
-            Cookie cookie = new Cookie(key, value);
-            cookie.setMaxAge(60*60*24);
-            cookie.setSecure(true);
-            cookie.setHttpOnly(true);
-            cookie.setPath("/");
+            Cookie cookie = makeCookie(key, value);
             response.addCookie(cookie);
         });
     }
 
     private void setUserStudentIdCookie(String studentId, HttpServletResponse response) {
         /* 암호화된 유저 아이디 쿠키에 넣어줌 */
-        Cookie cookie = new Cookie("sid", studentId);
+        Cookie cookie = makeCookie("sid", studentId);
+        response.addCookie(cookie);
+    }
+
+    private void setUserEnterYearCookie(String studentEnterYear, HttpServletResponse response) {
+        Cookie cookie = makeCookie("enter", studentEnterYear);
+        response.addCookie(cookie);
+    }
+
+    private String convertStudentIdToEnterYear(String studentId) {
+        return studentId.substring(0, 2).replace(studentId.charAt(0), (char) (studentId.charAt(0) - 'a'+'0'));
+    }
+
+    private Cookie makeCookie(String key, String value) {
+        Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(60*60*24);
         cookie.setSecure(true);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        response.addCookie(cookie);
+        return cookie;
     }
 }
