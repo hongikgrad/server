@@ -23,12 +23,12 @@ public class UserCourseController {
     @GetMapping("/users/courses")
     public ResponseEntity getUserCourses(HttpServletRequest request) {
         try {
-            return new ResponseEntity<UserTakenCourseDto>(
+            return new ResponseEntity<>(
                     courseService.getUserTakenCourses(request),
                     HttpStatus.OK
             );
         } catch (NullPointerException e) {
-            return new ResponseEntity<String>("유저의 정보를 알 수 없습니다.",
+            return new ResponseEntity<>("유저의 정보를 알 수 없습니다.",
                     HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             e.printStackTrace();
@@ -41,11 +41,11 @@ public class UserCourseController {
     public ResponseEntity<String> saveUserCourses(HttpServletRequest request) {
         try {
             courseService.saveUserTakenCourses(request);
-            return new ResponseEntity<String>("저장 성공", HttpStatus.OK);
+            return new ResponseEntity<>("저장 성공", HttpStatus.OK);
         } catch (IOException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch(NullPointerException e) {
-            return new ResponseEntity<String>("크롤링 실패", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("크롤링 실패", HttpStatus.BAD_REQUEST);
         }
     }
 }
