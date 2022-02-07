@@ -8,10 +8,8 @@ import com.hongikgrad.course.repository.CourseRepository;
 import com.hongikgrad.course.repository.MajorCourseRepository;
 import com.hongikgrad.course.repository.MajorRepository;
 import com.hongikgrad.course.repository.UserCourseRepository;
-import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -378,5 +376,37 @@ public class RepositoryTest {
 		}
 	}
 
+	/*
+	@Test
+	public void 동적쿼리테스트() {
+		List<FindCourseDto> courses = new ArrayList<>();
+		courses.add(new FindCourseDto("012101", 3));
+		courses.add(new FindCourseDto("012201", 3));
+		courses.add(new FindCourseDto("012107", 3));
+
+		BooleanBuilder builder = new BooleanBuilder();
+		for (FindCourseDto courseDto : courses) {
+			builder.or(course.number.eq(courseDto.getCourseNumber()).
+					and(course.credit.eq(courseDto.getCourseCredit())));
+		}
+
+		List<CourseDto> fetch = queryFactory
+				.select(
+						constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit
+						))
+				.from(course)
+				.where(builder)
+				.fetch();
+
+		for (CourseDto courseDto : fetch) {
+			System.out.println("courseDto = " + courseDto.getName());
+		}
+	}
+	 */
 
 }
