@@ -1,10 +1,10 @@
 package com.hongikgrad.course.repository;
 
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.entity.QCourse;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -80,5 +80,50 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
 				.where(course.name.contains("글쓰기").and(course.abeek.eq("교양필수")))
 				.limit(8)
 				.fetch();
+	}
+
+	@Override
+	public List<CourseDto> searchPageCourse(Pageable pageable) {
+		List<CourseDto> fetch = queryFactory
+				.select(
+						Projections.constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit,
+								course.semester
+						))
+				.from(course)
+				.offset(pageable.getOffset())
+				.limit(pageable.getPageSize())
+				.fetch();
+		return fetch;
+	}
+
+	@Override
+	public List<CourseDto> findAllCourseDto() {
+		return queryFactory
+				.select(
+						Projections.constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit,
+								course.semester
+						))
+				.from(course)
+				.fetch();
+	}
+
+	@Override
+	public List<CourseDto> findCoursesByNumbers(List<String> numbers) {
+		return null;
+	}
+
+	@Override
+	public List<CourseDto> findCoursesByNumber(String number) {
+		return null;
 	}
 }
