@@ -1,11 +1,13 @@
 package com.hongikgrad.course.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.List;
 
 @AllArgsConstructor
+@Getter
 public class InquiredCoursesResponseDto {
-	private int count;
-	private List<CourseResponseDto> courses;
+	private long count;
+	private List<CourseDto> courses;
 }
