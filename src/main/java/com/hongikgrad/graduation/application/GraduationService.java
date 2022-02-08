@@ -486,8 +486,13 @@ public class GraduationService {
 				.enterYear(getStudentEnterYear(request))
 				.major(getStudentMajor(request))
 				.takenCourses(getUserTakenCourses(request))
-				.isAbeek(false)
+				.isAbeek(getAbeekWhether(request))
 				.build();
+	}
+
+	private boolean getAbeekWhether(HttpServletRequest request) {
+		String abeek = request.getParameter("abeek");
+		return abeek.equals("true");
 	}
 
 	private List<CourseDto> getUserTakenCourses(HttpServletRequest request) {
@@ -564,7 +569,9 @@ public class GraduationService {
 	}
 
 	private Major getStudentMajor(HttpServletRequest request) {
-		return majorRepository.findMajorByCode(cookieService.getStudentMajorFromCookie(request));
+//		return majorRepository.findMajorByCode(cookieService.getStudentMajorFromCookie(request));
+		String majorCode = request.getParameter("major");
+		return majorRepository.findMajorByCode(majorCode);
 	}
 
 	private boolean hasTakenInformationSystem(List<CourseDto> takenCourses) {
