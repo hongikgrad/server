@@ -33,7 +33,7 @@ public class HongikGradApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
-						.allowedOrigins("https://localhost:3000", "https://hongik-grad.cf", "https://hongikgrad.cf")
+						.allowedOrigins("https://localhost:3000", "https://hongikgrad.com")
 						.allowedMethods("*")
 						.allowedHeaders("*")
 						.allowCredentials(true)
