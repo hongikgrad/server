@@ -13,6 +13,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -25,7 +26,7 @@ public class UserService {
 
     public void login(LoginRequestDto loginDto, HttpServletResponse response) throws IOException, AuthenticationException, NoSuchAlgorithmException {
         Map<String, String> loginData = Map.of(
-                "USER_ID", loginDto.getId(),
+                "USER_ID", loginDto.getId().toLowerCase(Locale.ROOT),
                 "PASSWD", loginDto.getPw()
         );
 

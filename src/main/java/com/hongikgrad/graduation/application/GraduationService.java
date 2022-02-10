@@ -538,13 +538,13 @@ public class GraduationService {
 		SubField artDesign = new SubField("예술과디자인", new ArrayList<>(), 0, false);
 
 		Map<String, SubField> subFields = new HashMap<>();
-		subFields.put("역사와문학", history);
-		subFields.put("언어와철학", language);
-		subFields.put("사회와경제", society);
-		subFields.put("법과생활", law);
-		subFields.put("공학의이해", engineering);
-		subFields.put("제2외국어와한문", foreign);
-		subFields.put("예술과디자인", artDesign);
+		subFields.put(history.getField(), history);
+		subFields.put(language.getField(), language);
+		subFields.put(society.getField(), society);
+		subFields.put(law.getField(), law);
+		subFields.put(engineering.getField(), engineering);
+		subFields.put(foreign.getField(), foreign);
+		subFields.put(artDesign.getField(), artDesign);
 		return subFields;
 	}
 
