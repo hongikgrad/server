@@ -58,6 +58,22 @@ public class CourseService {
         return allCourses.stream().filter((course) -> course.getName().contains(keyword)).collect(Collectors.toList());
     }
 
+    public List<CourseDto> searchCoursesWithCommand(String keyword, String command) {
+        if(command.equals("cat")) {
+            if(keyword.equals("글쓰기")) {
+                return courseRepository.findWritingCourses();
+            } else if(keyword.equals("전공기초영어")) {
+                return courseRepository.findMajorEnglishCourses();
+            } else if(keyword.equals("영어")) {
+                return courseRepository.findEnglishCourse();
+            }
+            return allCourses.stream().filter(course -> course.getAbeek().contains(keyword)).collect((Collectors.toList()));
+        } else if(command.equals("major")) {
+            Major major = majorRepository.findMajorByNameContains(keyword);
+            return majorCourseRepository.findCoursesByMajor(major);
+        } else return null;
+    }
+
     @Transactional(readOnly = true)
     public List<CourseDto> getAllMajorCourses(String majorCode) {
         Major studentMajor = majorRepository.findMajorByCode(majorCode.toUpperCase(Locale.ROOT));

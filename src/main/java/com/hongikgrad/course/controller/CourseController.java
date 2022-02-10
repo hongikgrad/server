@@ -18,16 +18,48 @@ public class CourseController {
 	private final CourseService courseService;
 
 	@GetMapping("/courses")
-	public ResponseEntity readAllCourses(Pageable pageable, @RequestParam(value = "keyword", required = false) String keyword) {
+	public ResponseEntity readAllCourses(
+	                                     @RequestParam(value = "keyword", required = false) String keyword,
+	                                     @RequestParam(value = "command", required = false) String command
+	) {
 		try {
-			if (keyword == null) {
-				List<CourseDto> courses = courseService.getAllCourses(pageable);
-				long totalCount = courseService.getAllCoursesCount();
+			if(command == null) {
+				List<CourseDto> courses = courseService.searchCourses(keyword);
+				long totalCount = courses.size();
+				return new ResponseEntity<>(new InquiredCoursesResponseDto(totalCount, courses), HttpStatus.OK);
+			} else {
+				List<CourseDto> courses = courseService.searchCoursesWithCommand(keyword, command);
+				long totalCount = courses.size();
 				return new ResponseEntity<>(new InquiredCoursesResponseDto(totalCount, courses), HttpStatus.OK);
 			}
-			List<CourseDto> courses = courseService.searchCourses(keyword);
-			long totalCount = courses.size();
-			return new ResponseEntity<>(new InquiredCoursesResponseDto(totalCount, courses), HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@GetMapping("/courses/writing")
+	public ResponseEntity writingCourses() {
+		try {
+			return null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	@GetMapping("/courses/majorEnglish")
+	public ResponseEntity majorEnglishCourse() {
+		try {
+			return null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	@GetMapping("/courses/english")
+	public ResponseEntity englishCourse() {
+		try {
+			return null;
 		} catch (Exception e) {
 			return null;
 		}
