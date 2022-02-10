@@ -1,8 +1,11 @@
 package com.hongikgrad;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import org.apache.tomcat.util.http.LegacyCookieProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -45,6 +48,12 @@ public class HongikGradApplication {
 	@Bean
 	JPAQueryFactory jpaQueryFactory(EntityManager em) {
 		return new JPAQueryFactory(em);
+	}
+
+	@Bean
+	public WebServerFactoryCustomizer<TomcatServletWebServerFactory> cookieProcessorCustomizer() {
+		return (serverFactory) -> serverFactory.addContextCustomizers(
+				(context) -> context.setCookieProcessor(new LegacyCookieProcessor()));
 	}
 
 }
