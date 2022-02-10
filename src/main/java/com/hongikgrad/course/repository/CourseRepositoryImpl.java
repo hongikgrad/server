@@ -24,7 +24,8 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
 								course.name,
 								course.number,
 								course.abeek,
-								course.credit
+								course.credit,
+								course.semester
 						))
 				.from(course)
 				.where(course.abeek.eq(abeek))
@@ -40,7 +41,8 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
 								course.name,
 								course.number,
 								course.abeek,
-								course.credit
+								course.credit,
+								course.semester
 						))
 				.from(course)
 				.where(course.number.eq("007114").or(course.number.eq("007115")))
@@ -57,7 +59,8 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
 								course.name,
 								course.number,
 								course.abeek,
-								course.credit
+								course.credit,
+								course.semester
 						))
 				.from(course)
 				.where(course.number.eq("001009"))
@@ -74,7 +77,8 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
 								course.name,
 								course.number,
 								course.abeek,
-								course.credit
+								course.credit,
+								course.semester
 						))
 				.from(course)
 				.where(course.name.contains("글쓰기").and(course.abeek.eq("교양필수")))

@@ -32,7 +32,8 @@ public class UserCourseRepositoryImpl implements UserCourseRepositoryCustom {
                                 course.name,
                                 course.number,
                                 course.abeek,
-                                course.credit
+                                course.credit,
+                                course.semester
                                 )
                 )
                 .from(userCourse)
@@ -78,7 +79,8 @@ public class UserCourseRepositoryImpl implements UserCourseRepositoryCustom {
                                 userCourse.course.name,
                                 userCourse.course.number,
                                 userCourse.course.abeek,
-                                userCourse.course.credit
+                                userCourse.course.credit,
+                                userCourse.course.semester
                         ))
                 .from(userCourse)
                 .join(majorCourse).on(majorCourse.course.id.eq(userCourse.course.id).and(majorCourse.major.eq(studentMajor).or(majorCourse.major.eq(generalMajor))))

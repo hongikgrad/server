@@ -29,7 +29,8 @@ public class MajorCourseRepositoryImpl implements MajorCourseCustom {
 								course.name,
 								course.number,
 								course.abeek,
-								course.credit
+								course.credit,
+								course.semester
 						))
 				.from(majorCourse)
 				.join(majorCourse.major, major)
@@ -48,7 +49,8 @@ public class MajorCourseRepositoryImpl implements MajorCourseCustom {
 								course.name,
 								course.number,
 								course.abeek,
-								course.credit
+								course.credit,
+								course.semester
 						)
 				)
 				.from(course)
@@ -66,7 +68,8 @@ public class MajorCourseRepositoryImpl implements MajorCourseCustom {
 								course.name,
 								course.number,
 								course.abeek,
-								course.credit
+								course.credit,
+								course.semester
 						))
 				.from(majorCourse)
 				.where(majorCourse.major.eq(studentMajor))
