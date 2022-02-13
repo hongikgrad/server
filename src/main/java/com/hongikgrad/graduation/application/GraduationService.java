@@ -91,8 +91,8 @@ public class GraduationService {
 	}
 
 	private void checkBasicElective(StudentDto student, List<RequirementDto> result) {
-		SubField writingCategory = new SubField("글쓰기", new ArrayList<>(), 0, false);
-		SubField englishCategory = new SubField("영어", new ArrayList<>(), 0, false);
+		SubField writingCategory = new SubField("글쓰기", new ArrayList<>(), 0, false, "/courses?type=grad&keyword=writing");
+		SubField englishCategory = new SubField("영어", new ArrayList<>(), 0, false, "/courses?type=grad&keyword=english");
 
 		List<CourseDto> takenCourses = student.getTakenCourses();
 		for (CourseDto course : takenCourses) {
@@ -175,8 +175,7 @@ public class GraduationService {
 	}
 
 	private void checkSpecializedElective(StudentDto student, List<RequirementDto> result) {
-		if (student.getEnterYear() < 2019) return;
-		SubField subField = new SubField("특성화교양", new ArrayList<>(), 0, false);
+		SubField subField = new SubField("특성화교양", new ArrayList<>(), 0, false, "/courses?type=grad&keyword=specializedelective");
 
 		List<CourseDto> takenCourses = student.getTakenCourses();
 		for (CourseDto course : takenCourses) {
