@@ -1,22 +1,24 @@
-package com.hongikgrad.course.repository;
+package com.hongikgrad.major.repository;
 
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.entity.Major;
-import com.hongikgrad.course.entity.QMajor;
+import com.hongikgrad.course.entity.Course;
+import com.hongikgrad.major.entity.Major;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.hongikgrad.course.entity.QCourse.course;
-import static com.hongikgrad.course.entity.QMajor.*;
-import static com.hongikgrad.course.entity.QMajor.major;
-import static com.hongikgrad.course.entity.QMajorCourse.majorCourse;
+import static com.hongikgrad.major.entity.QMajor.major;
+import static com.hongikgrad.major.entity.QMajorCourse.majorCourse;
+import static com.hongikgrad.major.entity.QMajorHierarchy.majorHierarchy;
 import static com.querydsl.core.types.Projections.constructor;
 
 @RequiredArgsConstructor
-public class MajorCourseRepositoryImpl implements MajorCourseCustom {
+public class MajorCourseRepositoryImpl implements MajorCourseRepositoryCustom {
 
 	private final JPAQueryFactory queryFactory;
 
@@ -60,7 +62,7 @@ public class MajorCourseRepositoryImpl implements MajorCourseCustom {
 	}
 
 	@Override
-	public List<CourseDto> findCoursesByMajor(Major studentMajor) {
+	public List<CourseDto> findCourseDtosByMajor(Major studentMajor) {
 		return queryFactory
 				.select(
 						Projections.constructor(
@@ -77,4 +79,41 @@ public class MajorCourseRepositoryImpl implements MajorCourseCustom {
 				.fetch();
 	}
 
+	@Override
+	public List<CourseDto> findCourseDtosByMajorId(Long majorId) {
+		return queryFactory
+				.select(
+						Projections.constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit,
+								course.semester
+						))
+				.from(majorCourse)
+				.where(majorCourse.major.id.eq(majorId))
+				.join(majorCourse.course, course)
+				.fetch();
+	}
+
+	@Override
+	public List<Course> findCoursesByMajor(Major major) {
+		return queryFactory
+				.select(course)
+				.from(majorCourse)
+				.where(majorCourse.major.eq(major))
+				.join(majorCourse.course, course)
+				.fetch();
+	}
+
+	@Override
+	public List<Course> findCoursesByMajorId(Long majorId) {
+		return queryFactory
+				.select(course)
+				.from(majorCourse)
+				.where(majorCourse.major.id.eq(majorId))
+				.join(majorCourse.course, course)
+				.fetch();
+	}
 }
