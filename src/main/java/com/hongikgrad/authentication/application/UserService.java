@@ -3,6 +3,7 @@ package com.hongikgrad.authentication.application;
 import com.hongikgrad.authentication.dto.LoginRequestDto;
 import com.hongikgrad.authentication.entity.User;
 import com.hongikgrad.authentication.repository.UserRepository;
+import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.common.crawler.UserCookieCrawler;
 import com.hongikgrad.common.hash.SHA256;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.naming.AuthenticationException;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -23,6 +25,7 @@ public class UserService {
     private final UserCookieCrawler userCookieCrawler;
     private final UserRepository userRepository;
     private final SHA256 sha256;
+    private final CookieService cookieService;
 
     public void login(LoginRequestDto loginDto, HttpServletResponse response) throws IOException, AuthenticationException, NoSuchAlgorithmException {
         Map<String, String> loginData = Map.of(
@@ -32,25 +35,34 @@ public class UserService {
 
         Map<String, String> userAuthCookie = userCookieCrawler.getUserAuthCookie(loginData);
         String studentId = sha256.hash(loginDto.getId());
-        String userMajor = loginDto.getMajor();
         String studentEnterYear = convertStudentIdToEnterYear(loginDto.getId());
 
         setUserAuthCookie(userAuthCookie, response);
         setUserStudentIdCookie(studentId, response);
-        setUserMajorCookie(userMajor, response);
         setUserEnterYearCookie(studentEnterYear, response);
-        saveUser(studentId);
+//        saveUser(studentId);
+    }
+
+    public void adminLogin(HttpServletResponse response) {
+        String token = System.getenv("ADMIN_TOKEN");
+        response.addCookie(makeCookie("admin", token));
+    }
+
+    public void testLogin(HttpServletResponse response) throws AuthenticationException, IOException, NoSuchAlgorithmException {
+        String testID = System.getenv("TEST_ID");
+        String testPW = System.getenv("TEST_PASSWORD");
+        login(new LoginRequestDto(testID, testPW), response);
+    }
+
+    public void authenticateAdmin(HttpServletRequest request) throws AuthenticationException {
+        String adminCookie = cookieService.getValueFromCookie(request, "admin");
+        if(!adminCookie.equals(System.getenv("ADMIN_TOKEN"))) throw new AuthenticationException();
     }
 
     private void saveUser(String studentId) {
         if(!userRepository.existsUserByStudentId(studentId)) {
             userRepository.save(new User(studentId));
         }
-    }
-
-    private void setUserMajorCookie(String major, HttpServletResponse response) {
-        Cookie cookie = makeCookie("major", major);
-        response.addCookie(cookie);
     }
 
     private void setUserAuthCookie(Map<String, String> userAuthCookie, HttpServletResponse response) {
@@ -83,4 +95,5 @@ public class UserService {
         cookie.setPath("/");
         return cookie;
     }
+
 }

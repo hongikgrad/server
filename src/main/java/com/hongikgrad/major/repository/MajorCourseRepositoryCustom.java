@@ -1,7 +1,7 @@
-package com.hongikgrad.course.repository;
+package com.hongikgrad.major.repository;
 
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.entity.Major;
+import com.hongikgrad.major.entity.Major;
 
 import java.util.List;
 

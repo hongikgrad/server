@@ -2,10 +2,10 @@ package com.hongikgrad.graduation.application;
 
 import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.entity.Major;
+import com.hongikgrad.major.entity.Major;
 import com.hongikgrad.course.repository.CourseRepository;
-import com.hongikgrad.course.repository.MajorCourseRepository;
-import com.hongikgrad.course.repository.MajorRepository;
+import com.hongikgrad.major.repository.MajorCourseRepository;
+import com.hongikgrad.major.repository.MajorRepository;
 import com.hongikgrad.course.repository.UserCourseRepository;
 import com.hongikgrad.graduation.dto.*;
 import lombok.RequiredArgsConstructor;
@@ -225,7 +225,7 @@ public class GraduationService {
 	private void checkMajorCredit(StudentDto student, List<RequirementDto> result) {
 		List<CourseDto> takenCourses = student.getTakenCourses();
 		Major studentMajor = student.getMajor();
-		List<CourseDto> majorCourses = majorCourseRepository.findCoursesByMajor(studentMajor);
+		List<CourseDto> majorCourses = majorCourseRepository.findCourseDtosByMajor(studentMajor);
 
 		int totalCredit = 0;
 		for (CourseDto course : takenCourses) {
@@ -445,7 +445,7 @@ public class GraduationService {
 	}
 
 	private boolean isDragonball(String abeek) {
-		return !(abeek.length() <= 3 || abeek.contains("MSC") || abeek.contains("교양"));
+		return (abeek != null) && !(abeek.length() <= 3 || abeek.contains("MSC") || abeek.contains("교양"));
 	}
 
 	private Map<String, SubField> getMSCSubFields() {
