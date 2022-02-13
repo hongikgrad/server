@@ -14,6 +14,9 @@ public interface CourseRepositoryCustom {
 	public List<CourseDto> findMajorEnglishCourses();
 	public List<CourseDto> findEnglishCourse();
 	public List<CourseDto> findWritingCourses();
+	public List<CourseDto> findSpecializedElectives();
+
+	public CourseDto findCourseDtoByNumberAndCredit(String courseNumber, int courseCredit);
 
 	public List<CourseDto> searchPageCourse(Pageable pageable);
 }

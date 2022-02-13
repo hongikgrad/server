@@ -87,6 +87,41 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
 	}
 
 	@Override
+	public List<CourseDto> findSpecializedElectives() {
+		return queryFactory
+				.select(
+						Projections.constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit,
+								course.semester
+						))
+				.from(course)
+				.where(course.number.eq("008752").or(course.number.eq("008751")))
+				.limit(2)
+				.fetch();
+	}
+
+	@Override
+	public CourseDto findCourseDtoByNumberAndCredit(String courseNumber, int courseCredit) {
+		return queryFactory
+				.select(
+						Projections.constructor(
+								CourseDto.class,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit,
+								course.semester
+						))
+				.from(course)
+				.where(course.number.eq(courseNumber).and(course.credit.eq(courseCredit)))
+				.fetchOne();
+	}
+
+	@Override
 	public List<CourseDto> searchPageCourse(Pageable pageable) {
 		List<CourseDto> fetch = queryFactory
 				.select(
