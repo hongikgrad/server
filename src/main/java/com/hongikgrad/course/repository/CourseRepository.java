@@ -9,4 +9,7 @@ import java.util.List;
 public interface CourseRepository extends JpaRepository<Course, Long>, CourseRepositoryCustom {
     public Course findByNumberAndAndCredit(String number, int credit);
     public Boolean existsCourseByNumberAndCredit(String number, int credit);
+    public List<Course> findCourseByNameContains(String name);
+
+    public Course findCourseById(Long id);
 }
