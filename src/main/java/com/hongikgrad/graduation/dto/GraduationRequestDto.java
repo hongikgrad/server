@@ -1,17 +1,17 @@
 package com.hongikgrad.graduation.dto;
 
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.major.entity.Major;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@Builder
 @Getter
-public class StudentDto {
-	private int enterYear;
-	private Major major;
+@NoArgsConstructor
+public class GraduationRequestDto {
+	private Long majorId;
 	private boolean isAbeek;
-	private List<CourseDto> takenCourses;
+	private List<CourseDto> courseList;
+	private Integer enterYear;
 }

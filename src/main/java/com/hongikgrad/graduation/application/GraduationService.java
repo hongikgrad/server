@@ -2,10 +2,10 @@ package com.hongikgrad.graduation.application;
 
 import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.entity.Major;
+import com.hongikgrad.major.entity.Major;
 import com.hongikgrad.course.repository.CourseRepository;
-import com.hongikgrad.course.repository.MajorCourseRepository;
-import com.hongikgrad.course.repository.MajorRepository;
+import com.hongikgrad.major.repository.MajorCourseRepository;
+import com.hongikgrad.major.repository.MajorRepository;
 import com.hongikgrad.course.repository.UserCourseRepository;
 import com.hongikgrad.graduation.dto.*;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,7 @@ public class GraduationService {
 		specializedElectiveNumber = new ArrayList<>(List.of("008751", "008752"));
 	}
 
-	public List<RequirementDto> getGraduationRequirementTestResult(HttpServletRequest request) {
+	public List<RequirementDto> getGraduationRequirementResult(GraduationRequestDto request) {
 		List<RequirementDto> result = new ArrayList<>();
 		StudentDto student = getStudent(request);
 
@@ -63,7 +63,9 @@ public class GraduationService {
 		checkMSC(student, result);
 
 		// 특성화교양
-		checkSpecializedElective(student, result);
+		if(student.getEnterYear() >= 19) {
+			checkSpecializedElective(student, result);
+		}
 
 		// 필수전공
 		checkRequiredMajor(student, result);
@@ -89,8 +91,8 @@ public class GraduationService {
 	}
 
 	private void checkBasicElective(StudentDto student, List<RequirementDto> result) {
-		SubField writingCategory = new SubField("글쓰기", new ArrayList<>(), 0, false);
-		SubField englishCategory = new SubField("영어", new ArrayList<>(), 0, false);
+		SubField writingCategory = new SubField("글쓰기", new ArrayList<>(), 0, false, "/courses?type=grad&keyword=writing");
+		SubField englishCategory = new SubField("영어", new ArrayList<>(), 0, false, "/courses?type=grad&keyword=english");
 
 		List<CourseDto> takenCourses = student.getTakenCourses();
 		for (CourseDto course : takenCourses) {
@@ -173,8 +175,7 @@ public class GraduationService {
 	}
 
 	private void checkSpecializedElective(StudentDto student, List<RequirementDto> result) {
-		if (student.getEnterYear() < 2019) return;
-		SubField subField = new SubField("특성화교양", new ArrayList<>(), 0, false);
+		SubField subField = new SubField("특성화교양", new ArrayList<>(), 0, false, "/courses?type=grad&keyword=specializedelective");
 
 		List<CourseDto> takenCourses = student.getTakenCourses();
 		for (CourseDto course : takenCourses) {
@@ -202,22 +203,22 @@ public class GraduationService {
 		SubField requiredMajor = new SubField("전공필수", new ArrayList<>(), 0, false);
 		List<CourseDto> takenCourses = student.getTakenCourses();
 		List<CourseDto> requiredCourse = getRequiredCourse(major);
-		for (CourseDto course : takenCourses) {
-			if (isRequiredMajor(course, requiredCourse)) {
-				takeCourse(course, requiredMajor);
-			}
-		}
+
+//		for (CourseDto course : takenCourses) {
+//			if (isRequiredMajor(course, requiredCourse)) {
+//				takeCourse(course, requiredMajor);
+//			}
+//		}
 
 		int totalCredit = getTotalCreditFromSubField(requiredMajor);
+		boolean isSatisfied = checkRequireMajorSatisfaction(student);
 		String briefing = "각 학과마다 지정된 전공필수 과목을 확인하세요!";
 
-		boolean isSatisfied = checkRequireMajorSatisfaction(student);
 		RequirementDto requirement = new RequirementDto(
 				"전공필수",
-				totalCredit,
+				null,
 				briefing,
-				isSatisfied,
-				requiredMajor
+				isSatisfied
 		);
 		result.add(requirement);
 	}
@@ -225,22 +226,26 @@ public class GraduationService {
 	private void checkMajorCredit(StudentDto student, List<RequirementDto> result) {
 		List<CourseDto> takenCourses = student.getTakenCourses();
 		Major studentMajor = student.getMajor();
-		List<CourseDto> majorCourses = majorCourseRepository.findCoursesByMajor(studentMajor);
+		List<CourseDto> majorCourses = majorCourseRepository.findCourseDtosByMajor(studentMajor);
 
-		int totalCredit = 0;
+		SubField majorSubField = new SubField("", new ArrayList<>(), 0, false);
+
 		for (CourseDto course : takenCourses) {
 			if (majorCourses.contains(course)) {
-				totalCredit += course.getCredit();
+//				totalCredit += course.getCredit();
+				takeCourse(course, majorSubField);
 			}
 		}
 
+		int totalCredit = getTotalCreditFromSubField(majorSubField);
 		boolean isSatisfied = totalCredit >= 50;
 
 		RequirementDto requirement = new RequirementDto(
 				"전공 수강학점",
 				totalCredit,
 				"전공(전공필수 모두 포함하여 50학점)을 이수하여야 함.",
-				isSatisfied
+				isSatisfied,
+				majorSubField
 		);
 
 		result.add(requirement);
@@ -273,7 +278,8 @@ public class GraduationService {
 	}
 
 	private boolean isSatisfiedMSC(StudentDto student, Map<String, SubField> subFieldMap) {
-		String majorCode = student.getMajor().getCode();
+		Major major = student.getMajor();
+		String majorCode = major.getCode();
 		int enterYear = student.getEnterYear();
 		boolean isAbeek = student.isAbeek();
 		List<CourseDto> takenCourses = student.getTakenCourses();
@@ -294,7 +300,7 @@ public class GraduationService {
 			}
 
 			// 필수이수과목 검사
-			if (majorCode.equals("ENG_EE")) {
+			if (majorCode.equals("EE")) {
 				if (hasTakenPhysics2(takenCourses) && hasTakenChemistry1(takenCourses)
 						&& (hasTakenPhysics2(takenCourses) || hasTakenChemistry2(takenCourses))) {
 					return true;
@@ -313,20 +319,20 @@ public class GraduationService {
 		} else {
 			// abeek 비인증
 			// 전체 학점 검사
-			if (majorCode.equals("ENG_CS")) {
+			if (majorCode.equals("CS")) {
 				if (mathCredit < 9 || scienceCredit < 9) return false;
 			} else {
 				if (mathCredit < 9 || scienceCredit < 9 || computerCredit < 6) return false;
 			}
 
 			// 필수이수과목 검사
-			if (majorCode.equals("ENG_EE")) {
+			if (majorCode.equals("EE")) {
 				if (hasTakenPhysics2(takenCourses) && hasTakenChemistry1(takenCourses)
 						&& (hasTakenPhysics2(takenCourses) || hasTakenChemistry2(takenCourses))) {
 					return true;
 				}
 				return false;
-			} else if (enterYear >= 20 && majorCode.equals("ENG_CS")) {
+			} else if (enterYear >= 20 && majorCode.equals("CS")) {
 				int takenCount = 0;
 				if (hasTakenInformationSystem(takenCourses)) takenCount += 1;
 				if (hasTakenOOP(takenCourses)) takenCount += 1;
@@ -337,7 +343,7 @@ public class GraduationService {
 				}
 				return false;
 
-			} else if (enterYear >= 20 && majorCode.equals("ENG_IE")) {
+			} else if (enterYear >= 20 && majorCode.equals("IE")) {
 				int takeCount = 0;
 				if (hasTakenInformationSystem(takenCourses)) takeCount += 1;
 				if (hasTakenWebProgramming(takenCourses)) takeCount += 1;
@@ -364,7 +370,7 @@ public class GraduationService {
 		boolean isAbeek = student.isAbeek();
 
 		if (isAbeek) {
-			if (majorCode.equals("ENG_EE")) {
+			if (majorCode.equals("EE")) {
 				return "분야별 최소이수학점(과학 8학점, 수학 9학점, 전산 6학점)을 포함하여 30학점 이상 이수하여야 함.\n" +
 						"MSC 과학분야 중\n" +
 						"대학물리(2), 대학물리실험(2), 대학화학(1), 대학화학실험(1)을 반드시 이수하여야 하고,\n" +
@@ -375,16 +381,16 @@ public class GraduationService {
 					"{대학물리(1), 대학물리실험(1)}, {대학화학(1), 대학화학실험(1)}, {대학물리(2), 대학물리실험(2),}, {대학화학(2), 대학화학실험(2)}\n" +
 					"4Set 중 2Set를 선택하여 이수하여야 함.\n";
 		} else {
-			if (majorCode.equals("ENG_EE")) {
+			if (majorCode.equals("EE")) {
 				return "24학점 이상 이수하여야 함.\n" +
 						"MSC 과학분야 중\n" +
 						"대학물리(2), 대학물리실험(2), 대학화학(1), 대학화학실험(1)을 반드시 이수하여야 하고,\n" +
 						"{대학물리(1),대학물리실험(1)} 와 {대학화학(2), 대학화학실험(2)} 둘 중 택일하여 이수하여야 함.\n";
 			} else if (enterYear >= 20) {
-				if (majorCode.equals("ENG_CS")) {
+				if (majorCode.equals("CS")) {
 					return "MSC 과학분야 내 상기의 대학화학, 대학물리에 대한 별도 이수 요건 없이 MSC 수학분야 및 과학분야 내 과목 이수학점 합이 18학점 이상 되면 인정함.\n" +
 							"<정보시스템개론, 객체지향프로그래밍, C-프로그래밍> 중 6학점을 이수해야 함.\n";
-				} else if (majorCode.equals("ENG_IE")) {
+				} else if (majorCode.equals("IE")) {
 					return "MSC 과학분야 내 상기의 대학화학, 대학물리에 대한 별도 이수 요건 없이 MSC 수학분야 및 과학분야 내 과목 이수학점 합이 18학점 이상 되면 인정함.\n" +
 							"<정보시스템개론, 웹프로그래밍, C-프로그래밍> 중 6학점을 이수해야 함.\n";
 				}
@@ -445,7 +451,7 @@ public class GraduationService {
 	}
 
 	private boolean isDragonball(String abeek) {
-		return !(abeek.length() <= 3 || abeek.contains("MSC") || abeek.contains("교양"));
+		return (abeek != null) && !(abeek.length() <= 3 || abeek.contains("MSC") || abeek.contains("교양"));
 	}
 
 	private Map<String, SubField> getMSCSubFields() {
@@ -481,7 +487,6 @@ public class GraduationService {
 	}
 
 	private StudentDto getStudent(HttpServletRequest request) {
-		// TODO: 공학 비공학 체크!
 		return StudentDto.builder()
 				.enterYear(getStudentEnterYear(request))
 				.major(getStudentMajor(request))
@@ -490,9 +495,22 @@ public class GraduationService {
 				.build();
 	}
 
+	private StudentDto getStudent(GraduationRequestDto request) {
+		return StudentDto.builder()
+				.enterYear(request.getEnterYear())
+				.major(getMajorById(request.getMajorId()))
+				.takenCourses(request.getCourseList())
+				.isAbeek(request.isAbeek())
+				.build();
+	}
+
 	private boolean getAbeekWhether(HttpServletRequest request) {
 		String abeek = request.getParameter("abeek");
 		return abeek.equals("true");
+	}
+
+	private Major getMajorById(Long majorId) {
+		return majorRepository.findMajorById(majorId);
 	}
 
 	private List<CourseDto> getUserTakenCourses(HttpServletRequest request) {
@@ -590,7 +608,7 @@ public class GraduationService {
 		return takenCourses.contains(new CourseDto("012306", 3));
 	}
 
-	private String getCourseUrl(String command, String keyword) {
-		return "/courses?" + "command=" + command + "&keyword=" + keyword;
+	private String getCourseUrl(String type, String keyword) {
+		return "/courses?" + "type=" + type + "&keyword=" + keyword;
 	}
 }

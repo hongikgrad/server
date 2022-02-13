@@ -1,5 +1,6 @@
-package com.hongikgrad.course.entity;
+package com.hongikgrad.major.entity;
 
+import com.hongikgrad.course.entity.Course;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

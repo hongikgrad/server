@@ -30,7 +30,7 @@ public class Crawler {
         }
     }
 
-    protected Map<String, String> getHeaders() {
+    public Map<String, String> getHeaders() {
         return Map.of(
                 "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 "Content-Type", "application/x-www-form-urlencoded",

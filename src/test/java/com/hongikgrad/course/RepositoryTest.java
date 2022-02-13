@@ -3,12 +3,11 @@ package com.hongikgrad.course;
 import com.hongikgrad.authentication.entity.User;
 import com.hongikgrad.common.hash.SHA256;
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.entity.*;
 import com.hongikgrad.course.repository.CourseRepository;
-import com.hongikgrad.course.repository.MajorCourseRepository;
-import com.hongikgrad.course.repository.MajorRepository;
+import com.hongikgrad.major.repository.MajorCourseRepository;
+import com.hongikgrad.major.repository.MajorRepository;
 import com.hongikgrad.course.repository.UserCourseRepository;
-import com.querydsl.core.BooleanBuilder;
+import com.hongikgrad.major.entity.Major;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +21,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.hongikgrad.course.entity.QCourse.course;
-import static com.hongikgrad.course.entity.QMajor.major;
-import static com.hongikgrad.course.entity.QMajorCourse.*;
 import static com.hongikgrad.course.entity.QUserCourse.userCourse;
+import static com.hongikgrad.major.entity.QMajor.major;
+import static com.hongikgrad.major.entity.QMajorCourse.majorCourse;
 import static com.querydsl.core.types.Projections.*;
 
 @SpringBootTest

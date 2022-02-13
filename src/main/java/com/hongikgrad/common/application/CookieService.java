@@ -20,7 +20,7 @@ public class CookieService {
 		return getValueFromCookie(request, "enter");
 	}
 
-	private String getValueFromCookie(HttpServletRequest request, String cKey) {
+	public String getValueFromCookie(HttpServletRequest request, String cKey) {
 		Cookie[] cookies = request.getCookies();
 		for (Cookie cookie : cookies) {
 			String key = cookie.getName();

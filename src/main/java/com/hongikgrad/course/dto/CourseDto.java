@@ -3,9 +3,11 @@ package com.hongikgrad.course.dto;
 import com.hongikgrad.course.entity.Course;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class CourseDto {
 	private String name;
 	private String number;
