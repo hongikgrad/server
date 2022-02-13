@@ -2,9 +2,7 @@ package com.hongikgrad.course.controller;
 
 import com.hongikgrad.course.application.CourseService;
 import com.hongikgrad.course.dto.CourseDto;
-import com.hongikgrad.course.dto.InquiredCoursesResponseDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,49 +16,14 @@ public class CourseController {
 	private final CourseService courseService;
 
 	@GetMapping("/courses")
-	public ResponseEntity readAllCourses(
-	                                     @RequestParam(value = "keyword", required = false) String keyword,
-	                                     @RequestParam(value = "command", required = false) String command
+	public ResponseEntity searchCourse(@RequestParam(value = "keyword", required = false) String keyword,
+	                                     @RequestParam(value = "type", required = false) String type
 	) {
 		try {
-			if(command == null) {
-				List<CourseDto> courses = courseService.searchCourses(keyword);
-				long totalCount = courses.size();
-				return new ResponseEntity<>(new InquiredCoursesResponseDto(totalCount, courses), HttpStatus.OK);
-			} else {
-				List<CourseDto> courses = courseService.searchCoursesWithCommand(keyword, command);
-				long totalCount = courses.size();
-				return new ResponseEntity<>(new InquiredCoursesResponseDto(totalCount, courses), HttpStatus.OK);
-			}
+			List<CourseDto> result = courseService.search(keyword, type);
+			return new ResponseEntity(result, HttpStatus.OK);
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
-		}
-	}
-
-	@GetMapping("/courses/writing")
-	public ResponseEntity writingCourses() {
-		try {
-			return null;
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
-	@GetMapping("/courses/majorEnglish")
-	public ResponseEntity majorEnglishCourse() {
-		try {
-			return null;
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
-	@GetMapping("/courses/english")
-	public ResponseEntity englishCourse() {
-		try {
-			return null;
-		} catch (Exception e) {
 			return null;
 		}
 	}
@@ -86,6 +49,7 @@ public class CourseController {
 		}
 	}
 
+	/* 시간표 사이트에서 크롤링 해서 과목들을 가져오는 컨트롤러 */
 	@PostMapping("/courses")
 	public ResponseEntity saveAllCourses() {
 		try {
