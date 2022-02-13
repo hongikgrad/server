@@ -3,7 +3,7 @@ package com.hongikgrad.course.repository;
 import com.hongikgrad.authentication.entity.User;
 import com.hongikgrad.course.dto.CourseDto;
 import com.hongikgrad.course.entity.Course;
-import com.hongikgrad.course.entity.Major;
+import com.hongikgrad.major.entity.Major;
 
 import java.util.List;
 
