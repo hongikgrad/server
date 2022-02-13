@@ -300,7 +300,7 @@ public class GraduationService {
 			}
 
 			// 필수이수과목 검사
-			if (majorCode.equals("ENG_EE")) {
+			if (majorCode.equals("EE")) {
 				if (hasTakenPhysics2(takenCourses) && hasTakenChemistry1(takenCourses)
 						&& (hasTakenPhysics2(takenCourses) || hasTakenChemistry2(takenCourses))) {
 					return true;
@@ -319,20 +319,20 @@ public class GraduationService {
 		} else {
 			// abeek 비인증
 			// 전체 학점 검사
-			if (majorCode.equals("ENG_CS")) {
+			if (majorCode.equals("CS")) {
 				if (mathCredit < 9 || scienceCredit < 9) return false;
 			} else {
 				if (mathCredit < 9 || scienceCredit < 9 || computerCredit < 6) return false;
 			}
 
 			// 필수이수과목 검사
-			if (majorCode.equals("ENG_EE")) {
+			if (majorCode.equals("EE")) {
 				if (hasTakenPhysics2(takenCourses) && hasTakenChemistry1(takenCourses)
 						&& (hasTakenPhysics2(takenCourses) || hasTakenChemistry2(takenCourses))) {
 					return true;
 				}
 				return false;
-			} else if (enterYear >= 20 && majorCode.equals("ENG_CS")) {
+			} else if (enterYear >= 20 && majorCode.equals("CS")) {
 				int takenCount = 0;
 				if (hasTakenInformationSystem(takenCourses)) takenCount += 1;
 				if (hasTakenOOP(takenCourses)) takenCount += 1;
@@ -343,7 +343,7 @@ public class GraduationService {
 				}
 				return false;
 
-			} else if (enterYear >= 20 && majorCode.equals("ENG_IE")) {
+			} else if (enterYear >= 20 && majorCode.equals("IE")) {
 				int takeCount = 0;
 				if (hasTakenInformationSystem(takenCourses)) takeCount += 1;
 				if (hasTakenWebProgramming(takenCourses)) takeCount += 1;
@@ -370,7 +370,7 @@ public class GraduationService {
 		boolean isAbeek = student.isAbeek();
 
 		if (isAbeek) {
-			if (majorCode.equals("ENG_EE")) {
+			if (majorCode.equals("EE")) {
 				return "분야별 최소이수학점(과학 8학점, 수학 9학점, 전산 6학점)을 포함하여 30학점 이상 이수하여야 함.\n" +
 						"MSC 과학분야 중\n" +
 						"대학물리(2), 대학물리실험(2), 대학화학(1), 대학화학실험(1)을 반드시 이수하여야 하고,\n" +
@@ -381,16 +381,16 @@ public class GraduationService {
 					"{대학물리(1), 대학물리실험(1)}, {대학화학(1), 대학화학실험(1)}, {대학물리(2), 대학물리실험(2),}, {대학화학(2), 대학화학실험(2)}\n" +
 					"4Set 중 2Set를 선택하여 이수하여야 함.\n";
 		} else {
-			if (majorCode.equals("ENG_EE")) {
+			if (majorCode.equals("EE")) {
 				return "24학점 이상 이수하여야 함.\n" +
 						"MSC 과학분야 중\n" +
 						"대학물리(2), 대학물리실험(2), 대학화학(1), 대학화학실험(1)을 반드시 이수하여야 하고,\n" +
 						"{대학물리(1),대학물리실험(1)} 와 {대학화학(2), 대학화학실험(2)} 둘 중 택일하여 이수하여야 함.\n";
 			} else if (enterYear >= 20) {
-				if (majorCode.equals("ENG_CS")) {
+				if (majorCode.equals("CS")) {
 					return "MSC 과학분야 내 상기의 대학화학, 대학물리에 대한 별도 이수 요건 없이 MSC 수학분야 및 과학분야 내 과목 이수학점 합이 18학점 이상 되면 인정함.\n" +
 							"<정보시스템개론, 객체지향프로그래밍, C-프로그래밍> 중 6학점을 이수해야 함.\n";
-				} else if (majorCode.equals("ENG_IE")) {
+				} else if (majorCode.equals("IE")) {
 					return "MSC 과학분야 내 상기의 대학화학, 대학물리에 대한 별도 이수 요건 없이 MSC 수학분야 및 과학분야 내 과목 이수학점 합이 18학점 이상 되면 인정함.\n" +
 							"<정보시스템개론, 웹프로그래밍, C-프로그래밍> 중 6학점을 이수해야 함.\n";
 				}
@@ -487,7 +487,6 @@ public class GraduationService {
 	}
 
 	private StudentDto getStudent(HttpServletRequest request) {
-		// TODO: 공학 비공학 체크!
 		return StudentDto.builder()
 				.enterYear(getStudentEnterYear(request))
 				.major(getStudentMajor(request))
@@ -496,9 +495,22 @@ public class GraduationService {
 				.build();
 	}
 
+	private StudentDto getStudent(GraduationRequestDto request) {
+		return StudentDto.builder()
+				.enterYear(request.getEnterYear())
+				.major(getMajorById(request.getMajorId()))
+				.takenCourses(request.getCourseList())
+				.isAbeek(request.isAbeek())
+				.build();
+	}
+
 	private boolean getAbeekWhether(HttpServletRequest request) {
 		String abeek = request.getParameter("abeek");
 		return abeek.equals("true");
+	}
+
+	private Major getMajorById(Long majorId) {
+		return majorRepository.findMajorById(majorId);
 	}
 
 	private List<CourseDto> getUserTakenCourses(HttpServletRequest request) {
@@ -596,7 +608,7 @@ public class GraduationService {
 		return takenCourses.contains(new CourseDto("012306", 3));
 	}
 
-	private String getCourseUrl(String command, String keyword) {
-		return "/courses?" + "command=" + command + "&keyword=" + keyword;
+	private String getCourseUrl(String type, String keyword) {
+		return "/courses?" + "type=" + type + "&keyword=" + keyword;
 	}
 }
