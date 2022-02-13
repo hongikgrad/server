@@ -46,7 +46,7 @@ public class GraduationService {
 		specializedElectiveNumber = new ArrayList<>(List.of("008751", "008752"));
 	}
 
-	public List<RequirementDto> getGraduationRequirementTestResult(HttpServletRequest request) {
+	public List<RequirementDto> getGraduationRequirementResult(GraduationRequestDto request) {
 		List<RequirementDto> result = new ArrayList<>();
 		StudentDto student = getStudent(request);
 
@@ -63,7 +63,9 @@ public class GraduationService {
 		checkMSC(student, result);
 
 		// 특성화교양
-		checkSpecializedElective(student, result);
+		if(student.getEnterYear() >= 19) {
+			checkSpecializedElective(student, result);
+		}
 
 		// 필수전공
 		checkRequiredMajor(student, result);
