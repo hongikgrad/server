@@ -203,22 +203,22 @@ public class GraduationService {
 		SubField requiredMajor = new SubField("전공필수", new ArrayList<>(), 0, false);
 		List<CourseDto> takenCourses = student.getTakenCourses();
 		List<CourseDto> requiredCourse = getRequiredCourse(major);
-		for (CourseDto course : takenCourses) {
-			if (isRequiredMajor(course, requiredCourse)) {
-				takeCourse(course, requiredMajor);
-			}
-		}
+
+//		for (CourseDto course : takenCourses) {
+//			if (isRequiredMajor(course, requiredCourse)) {
+//				takeCourse(course, requiredMajor);
+//			}
+//		}
 
 		int totalCredit = getTotalCreditFromSubField(requiredMajor);
+		boolean isSatisfied = checkRequireMajorSatisfaction(student);
 		String briefing = "각 학과마다 지정된 전공필수 과목을 확인하세요!";
 
-		boolean isSatisfied = checkRequireMajorSatisfaction(student);
 		RequirementDto requirement = new RequirementDto(
 				"전공필수",
-				totalCredit,
+				null,
 				briefing,
-				isSatisfied,
-				requiredMajor
+				isSatisfied
 		);
 		result.add(requirement);
 	}
@@ -228,20 +228,24 @@ public class GraduationService {
 		Major studentMajor = student.getMajor();
 		List<CourseDto> majorCourses = majorCourseRepository.findCourseDtosByMajor(studentMajor);
 
-		int totalCredit = 0;
+		SubField majorSubField = new SubField("", new ArrayList<>(), 0, false);
+
 		for (CourseDto course : takenCourses) {
 			if (majorCourses.contains(course)) {
-				totalCredit += course.getCredit();
+//				totalCredit += course.getCredit();
+				takeCourse(course, majorSubField);
 			}
 		}
 
+		int totalCredit = getTotalCreditFromSubField(majorSubField);
 		boolean isSatisfied = totalCredit >= 50;
 
 		RequirementDto requirement = new RequirementDto(
 				"전공 수강학점",
 				totalCredit,
 				"전공(전공필수 모두 포함하여 50학점)을 이수하여야 함.",
-				isSatisfied
+				isSatisfied,
+				majorSubField
 		);
 
 		result.add(requirement);
@@ -274,7 +278,8 @@ public class GraduationService {
 	}
 
 	private boolean isSatisfiedMSC(StudentDto student, Map<String, SubField> subFieldMap) {
-		String majorCode = student.getMajor().getCode();
+		Major major = student.getMajor();
+		String majorCode = major.getCode();
 		int enterYear = student.getEnterYear();
 		boolean isAbeek = student.isAbeek();
 		List<CourseDto> takenCourses = student.getTakenCourses();
