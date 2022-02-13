@@ -1,5 +1,6 @@
-package com.hongikgrad.course.entity;
+package com.hongikgrad.major.entity;
 
+import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,6 +28,9 @@ public class Major {
     @Column(name = "college")
     private String college;
 
+    @Column(name = "enable", columnDefinition = "boolean default true")
+    private Boolean enable;
+
     public Major(String name) {
         this.name = name;
     }
@@ -40,5 +44,35 @@ public class Major {
         this.name = name;
         this.code = code;
         this.college = college;
+    }
+
+    public void changeName(String name) {
+        if(name == null) return;
+        this.name = name;
+    }
+
+    public void changeCode(String code) {
+        if(code == null) return;
+        this.code = code;
+    }
+
+    public void changeCollege(String college) {
+        if(college == null) return;
+        this.college = college;
+    }
+
+    public void toggleEnable() {
+        this.enable = !this.enable;
+        System.out.println("######");
+        System.out.println("id = " + this.enable);
+    }
+
+    @QueryProjection
+    public Major(Long id, String name, String code, String college, Boolean enable) {
+        this.id = id;
+        this.name = name;
+        this.code = code;
+        this.college = college;
+        this.enable = enable;
     }
 }
