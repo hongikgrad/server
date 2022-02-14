@@ -237,6 +237,7 @@ public class CourseService {
 		try {
 			for (Element tableRow : tableRows) {
 				if (!isCourseInfoRow(tableRow)) continue;
+				if (isRetakenCourse(tableRow)) continue;
 				Element courseNumberElement = tableRow.child(0);
 				Element courseCreditElement = tableRow.child(3);
 				String courseNumber = getTextFromElement(courseNumberElement);
@@ -263,6 +264,13 @@ public class CourseService {
 		return "";
 	}
 
+	private Boolean isRetakenCourse(Element tableRow) {
+		Elements children = tableRow.children();
+		if(children.last().text().equals("재수강") || children.last().previousElementSibling().text().equals("F"))
+			return true;
+		return false;
+	}
+
 	private Boolean isCourseInfoRow(Element tableRow) {
 		if(tableRow == null || tableRow.childrenSize() < 4) return false;
 		return true;
@@ -276,10 +284,6 @@ public class CourseService {
 	}
 
 	private void filterTableChildren(Elements elements) {
-//		for (Element bodyChild : elements) {
-//			if (hasElementChildTable(bodyChild)) continue;
-//			elements.removeIf(bodyChild);
-//		}
 		elements.removeIf(element -> !hasElementChildTable(element));
 	}
 
