@@ -6,7 +6,6 @@ import com.hongikgrad.major.entity.Major;
 import com.hongikgrad.course.repository.CourseRepository;
 import com.hongikgrad.major.repository.MajorCourseRepository;
 import com.hongikgrad.major.repository.MajorRepository;
-import com.hongikgrad.course.repository.UserCourseRepository;
 import com.hongikgrad.graduation.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class GraduationService {
 
-	private final UserCourseRepository userCourseRepository;
 	private final CourseRepository courseRepository;
 	private final MajorCourseRepository majorCourseRepository;
 	private final MajorRepository majorRepository;
@@ -486,15 +484,6 @@ public class GraduationService {
 		return courses.contains(new CourseDto("012110", 3)) && courses.contains(new CourseDto("012113", 1));
 	}
 
-	private StudentDto getStudent(HttpServletRequest request) {
-		return StudentDto.builder()
-				.enterYear(getStudentEnterYear(request))
-				.major(getStudentMajor(request))
-				.takenCourses(getUserTakenCourses(request))
-				.isAbeek(getAbeekWhether(request))
-				.build();
-	}
-
 	private StudentDto getStudent(GraduationRequestDto request) {
 		return StudentDto.builder()
 				.enterYear(request.getEnterYear())
@@ -511,11 +500,6 @@ public class GraduationService {
 
 	private Major getMajorById(Long majorId) {
 		return majorRepository.findMajorById(majorId);
-	}
-
-	private List<CourseDto> getUserTakenCourses(HttpServletRequest request) {
-		String studentId = cookieService.getStudentIdFromCookie(request);
-		return userCourseRepository.findUserTakenCoursesByStudentId(studentId);
 	}
 
 	private List<SubField> combineSubFields(SubField... subFields) {

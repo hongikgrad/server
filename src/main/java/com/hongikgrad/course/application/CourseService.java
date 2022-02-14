@@ -1,6 +1,5 @@
 package com.hongikgrad.course.application;
 
-import com.hongikgrad.authentication.repository.UserRepository;
 import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.common.crawler.CourseCrawler;
 import com.hongikgrad.common.crawler.UserCourseCrawler;
@@ -13,7 +12,6 @@ import com.hongikgrad.major.entity.MajorCourse;
 import com.hongikgrad.course.repository.CourseRepository;
 import com.hongikgrad.major.repository.MajorCourseRepository;
 import com.hongikgrad.major.repository.MajorRepository;
-import com.hongikgrad.course.repository.UserCourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
@@ -34,8 +32,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class CourseService {
 
-	private final UserCourseRepository userCourseRepository;
-	private final UserRepository userRepository;
 	private final CourseRepository courseRepository;
 	private final MajorRepository majorRepository;
 	private final MajorCourseRepository majorCourseRepository;

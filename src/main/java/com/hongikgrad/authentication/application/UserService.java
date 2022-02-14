@@ -1,11 +1,8 @@
 package com.hongikgrad.authentication.application;
 
 import com.hongikgrad.authentication.dto.LoginRequestDto;
-import com.hongikgrad.authentication.entity.User;
-import com.hongikgrad.authentication.repository.UserRepository;
 import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.common.crawler.UserCookieCrawler;
-import com.hongikgrad.common.hash.SHA256;
 import com.hongikgrad.course.exception.InvalidDocumentException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -24,24 +20,16 @@ import java.util.Map;
 public class UserService {
 
     private final UserCookieCrawler userCookieCrawler;
-    private final UserRepository userRepository;
-    private final SHA256 sha256;
     private final CookieService cookieService;
 
     public void login(LoginRequestDto loginDto, HttpServletResponse response) throws IOException, AuthenticationException, NoSuchAlgorithmException, InvalidDocumentException {
         Map<String, String> loginData = Map.of(
-                "USER_ID", loginDto.getId().toLowerCase(Locale.ROOT),
+                "USER_ID", loginDto.getId(),
                 "PASSWD", loginDto.getPw()
         );
 
         Map<String, String> userAuthCookie = userCookieCrawler.getUserAuthCookie(loginData);
-        String studentId = sha256.hash(loginDto.getId());
-        String studentEnterYear = convertStudentIdToEnterYear(loginDto.getId());
-
         setUserAuthCookie(userAuthCookie, response);
-        setUserStudentIdCookie(studentId, response);
-        setUserEnterYearCookie(studentEnterYear, response);
-//        saveUser(studentId);
     }
 
     public void adminLogin(HttpServletResponse response) {
@@ -60,32 +48,11 @@ public class UserService {
         if(!adminCookie.equals(System.getenv("ADMIN_TOKEN"))) throw new AuthenticationException();
     }
 
-    private void saveUser(String studentId) {
-        if(!userRepository.existsUserByStudentId(studentId)) {
-            userRepository.save(new User(studentId));
-        }
-    }
-
     private void setUserAuthCookie(Map<String, String> userAuthCookie, HttpServletResponse response) {
         userAuthCookie.forEach((key, value) -> {
             Cookie cookie = makeCookie(key, value);
             response.addCookie(cookie);
         });
-    }
-
-    private void setUserStudentIdCookie(String studentId, HttpServletResponse response) {
-        /* 암호화된 유저 아이디 쿠키에 넣어줌 */
-        Cookie cookie = makeCookie("sid", studentId);
-        response.addCookie(cookie);
-    }
-
-    private void setUserEnterYearCookie(String studentEnterYear, HttpServletResponse response) {
-        Cookie cookie = makeCookie("enter", studentEnterYear);
-        response.addCookie(cookie);
-    }
-
-    private String convertStudentIdToEnterYear(String studentId) {
-        return studentId.substring(0, 2).replace(studentId.charAt(0), (char) (studentId.charAt(0) - 'a'+'0'));
     }
 
     private Cookie makeCookie(String key, String value) {
