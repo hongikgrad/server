@@ -2,6 +2,7 @@ package com.hongikgrad.authentication.controller;
 
 import com.hongikgrad.authentication.application.UserService;
 import com.hongikgrad.authentication.dto.LoginRequestDto;
+import com.hongikgrad.course.exception.InvalidDocumentException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,9 @@ public class UserController {
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		} catch (NoSuchAlgorithmException e) {
 			return new ResponseEntity<String>("Invalid Student ID", HttpStatus.BAD_REQUEST);
+		} catch (InvalidDocumentException e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(HttpStatus.NETWORK_AUTHENTICATION_REQUIRED);
 		}
 	}
 

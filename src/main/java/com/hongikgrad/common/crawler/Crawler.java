@@ -1,5 +1,6 @@
 package com.hongikgrad.common.crawler;
 
+import com.hongikgrad.course.exception.InvalidDocumentException;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -14,7 +15,7 @@ public class Crawler {
 
     String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36";
 
-    private Connection.Response getResponseByJsoup(String url, Map<String, String> cookies, Map<String, String> headers, Map<String, String> data, Connection.Method method) {
+    private Connection.Response getResponseByJsoup(String url, Map<String, String> cookies, Map<String, String> headers, Map<String, String> data, Connection.Method method) throws InvalidDocumentException {
         try {
             Connection conn = Jsoup.connect(url)
                     .timeout(1000*20)
@@ -24,9 +25,9 @@ public class Crawler {
             if (cookies != null) conn.cookies(cookies);
             if (data != null) conn.data(data);
             return conn.execute();
-        } catch (NullPointerException | IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            throw new InvalidDocumentException();
         }
     }
 
@@ -64,11 +65,16 @@ public class Crawler {
         return extractedCookies;
     }
 
-    public Map<String, String> getCookieFromJsoupResponse(String url, Map<String, String> cookies, Map<String, String> headers, Map<String, String> data, Connection.Method method) throws IOException {
+    public Map<String, String> getCookieFromJsoupResponse(String url, Map<String, String> cookies, Map<String, String> headers, Map<String, String> data, Connection.Method method) throws InvalidDocumentException {
         return getResponseByJsoup(url, cookies, headers, data, method).cookies();
     }
 
-    public Document getJsoupResponseDocument(String url, Map<String, String> cookies, Map<String, String> headers, Map<String, String> data, Connection.Method method) throws IOException {
-        return getResponseByJsoup(url, cookies, headers, data, method).parse();
+    public Document getJsoupResponseDocument(String url, Map<String, String> cookies, Map<String, String> headers, Map<String, String> data, Connection.Method method) throws InvalidDocumentException {
+        try {
+            return getResponseByJsoup(url, cookies, headers, data, method).parse();
+        } catch(Exception e) {
+            e.printStackTrace();
+            throw new InvalidDocumentException("Document Parse Error");
+        }
     }
 }

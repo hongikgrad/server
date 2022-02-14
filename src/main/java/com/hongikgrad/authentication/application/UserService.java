@@ -6,6 +6,7 @@ import com.hongikgrad.authentication.repository.UserRepository;
 import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.common.crawler.UserCookieCrawler;
 import com.hongikgrad.common.hash.SHA256;
+import com.hongikgrad.course.exception.InvalidDocumentException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,7 @@ public class UserService {
     private final SHA256 sha256;
     private final CookieService cookieService;
 
-    public void login(LoginRequestDto loginDto, HttpServletResponse response) throws IOException, AuthenticationException, NoSuchAlgorithmException {
+    public void login(LoginRequestDto loginDto, HttpServletResponse response) throws IOException, AuthenticationException, NoSuchAlgorithmException, InvalidDocumentException {
         Map<String, String> loginData = Map.of(
                 "USER_ID", loginDto.getId().toLowerCase(Locale.ROOT),
                 "PASSWD", loginDto.getPw()
@@ -48,7 +49,7 @@ public class UserService {
         response.addCookie(makeCookie("admin", token));
     }
 
-    public void testLogin(HttpServletResponse response) throws AuthenticationException, IOException, NoSuchAlgorithmException {
+    public void testLogin(HttpServletResponse response) throws AuthenticationException, IOException, NoSuchAlgorithmException, InvalidDocumentException {
         String testID = System.getenv("TEST_ID");
         String testPW = System.getenv("TEST_PASSWORD");
         login(new LoginRequestDto(testID, testPW), response);

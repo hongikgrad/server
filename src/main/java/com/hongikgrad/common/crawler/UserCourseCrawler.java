@@ -1,6 +1,7 @@
 package com.hongikgrad.common.crawler;
 
 import com.hongikgrad.course.dto.CourseResponseDto;
+import com.hongikgrad.course.exception.InvalidDocumentException;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,7 +18,7 @@ import java.util.Objects;
 public class UserCourseCrawler extends Crawler {
     String TAKEN_COURSE_URL = "https://cn.hongik.ac.kr/stud/P/01000/01000.jsp";
 
-    public List<CourseResponseDto> getUserTakenCoursesFromClassnet(HttpServletRequest request) throws IOException, NullPointerException {
+    public List<CourseResponseDto> getUserTakenCoursesFromClassnet(HttpServletRequest request) throws IOException, NullPointerException, InvalidDocumentException {
         Document document = getJsoupResponseDocument(TAKEN_COURSE_URL, extractCookie(request), getHeaders(), null, Connection.Method.POST);
         List<CourseResponseDto> courses = new ArrayList<>();
         Elements semesters = Objects.requireNonNull(document.getElementById("body")).select(".table0");

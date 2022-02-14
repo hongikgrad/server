@@ -1,5 +1,6 @@
 package com.hongikgrad.common.crawler;
 
+import com.hongikgrad.course.exception.InvalidDocumentException;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ public class UserCookieCrawler extends Crawler {
     String CLASSNET_BASE_URL = "https://cn.hongik.ac.kr";
     String CLASSNET_MAIN_URL = CLASSNET_BASE_URL + "/stud";
 
-    public Map<String, String> getUserAuthCookie(Map<String ,String> loginData) throws IOException, AuthenticationException {
+    public Map<String, String> getUserAuthCookie(Map<String ,String> loginData) throws InvalidDocumentException, AuthenticationException, IOException {
 
         Map<String, String> execPageCookie = getUserAuthCookieFromExecPage(loginData);
 
@@ -32,15 +33,15 @@ public class UserCookieCrawler extends Crawler {
         return userAuthCookie;
     }
 
-    private Map<String, String> getUserAuthCookieFromClassnetMainPage(Map<String, String> cookies) throws IOException {
+    private Map<String, String> getUserAuthCookieFromClassnetMainPage(Map<String, String> cookies) throws InvalidDocumentException {
         return getCookieFromJsoupResponse(CLASSNET_MAIN_URL, cookies, getHeaders(), null, Connection.Method.POST);
     }
 
-    private Map<String, String> getUserAuthCookieFromClassnetPage(Map<String ,String> cookies) throws IOException {
+    private Map<String, String> getUserAuthCookieFromClassnetPage(Map<String ,String> cookies) throws InvalidDocumentException {
         return getCookieFromJsoupResponse(CLASSNET_BASE_URL, cookies, getHeaders(), null, Connection.Method.POST);
     }
 
-    private Map<String, String> getUserAuthCookieFromExecPage(Map<String, String> loginInfo) throws IOException, AuthenticationException {
+    private Map<String, String> getUserAuthCookieFromExecPage(Map<String, String> loginInfo) throws IOException, AuthenticationException, InvalidDocumentException {
         Document loginExecPage = getJsoupResponseDocument(LOGIN_EXEC_URL, null, getHeaders(), loginInfo, Connection.Method.POST);
         Map<String, String> userAuthCookie = parseUserAuthCookie(loginExecPage);
         validateCookie(userAuthCookie);

@@ -2,6 +2,7 @@ package com.hongikgrad.common.crawler;
 
 import com.hongikgrad.course.dto.CrawlingCourseDto;
 import com.hongikgrad.course.dto.CrawlingCourseListDto;
+import com.hongikgrad.course.exception.InvalidDocumentException;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Component;
@@ -14,7 +15,7 @@ import static org.jsoup.Connection.Method.*;
 @Component
 @RequiredArgsConstructor
 public class CourseCrawler extends Crawler {
-    public CrawlingCourseListDto getCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException {
+    public CrawlingCourseListDto getCoursesFromTimeTable(Map<String, String> data) throws IOException, IndexOutOfBoundsException, InvalidDocumentException {
         Element tbody = getParsedTimeTableBody(data);
         return getCoursesFromTbody(tbody);
     }
@@ -62,7 +63,7 @@ public class CourseCrawler extends Crawler {
         return courseNumber.substring(0, 6).matches("[0-9]{6}");
     }
 
-    private Element getParsedTimeTableBody(Map<String, String> data) throws IOException {
+    private Element getParsedTimeTableBody(Map<String, String> data) throws InvalidDocumentException, IOException {
         String TIME_TABLE_URL = "https://sugang.hongik.ac.kr/cn50001.jsp";
         return Objects.requireNonNull(getJsoupResponseDocument(TIME_TABLE_URL, null, getHeaders(), data, POST).body().getElementById("select_list")).child(0);
     }

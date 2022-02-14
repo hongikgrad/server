@@ -3,6 +3,7 @@ package com.hongikgrad.course.controller;
 import com.hongikgrad.course.application.CourseService;
 import com.hongikgrad.course.dto.CourseDto;
 import com.hongikgrad.course.dto.UserTakenCourseDto;
+import com.hongikgrad.course.exception.InvalidDocumentException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,11 @@ public class UserCourseController {
             Integer totalCredit = courseService.getUserTakenTotalCredit(userTakenCourses);
             Integer totalCount = userTakenCourses.size();
             return new ResponseEntity(new UserTakenCourseDto(totalCredit, totalCount, userTakenCourses), HttpStatus.OK);
+        } catch(InvalidDocumentException e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.NETWORK_AUTHENTICATION_REQUIRED);
         } catch(Exception e) {
+            e.printStackTrace();
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
     }
