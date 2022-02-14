@@ -29,8 +29,8 @@ public class MajorCourse {
 	@JoinColumn(name = "course_id")
 	private Course course;
 
-	@Column(name = "is_required", columnDefinition = "tinyint(1) default 0")
-	private Boolean isRequired;
+	@Column(name = "is_required", columnDefinition = "bit(1) default 0")
+	private boolean isRequired;
 
 	public MajorCourse(Major major, Course course) {
 		this.major = major;

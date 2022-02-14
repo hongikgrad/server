@@ -28,8 +28,8 @@ public class Major {
     @Column(name = "college")
     private String college;
 
-    @Column(name = "enable", columnDefinition = "boolean default true")
-    private Boolean enable;
+    @Column(name = "enable", columnDefinition = "bit(1) default 0")
+    private boolean enable;
 
     public Major(String name) {
         this.name = name;
