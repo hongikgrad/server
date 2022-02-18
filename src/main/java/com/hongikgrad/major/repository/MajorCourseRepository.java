@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MajorCourseRepository extends JpaRepository<MajorCourse, Long>, MajorCourseRepositoryCustom {
 	public MajorCourse findMajorCourseByCourseAndMajor(Course course, Major major);
+	public MajorCourse findMajorCourseByCourseIdAndMajorId(Long courseId, Long majorId);
 	public Boolean existsMajorCourseByMajorAndCourse(Major major, Course course);
 }
