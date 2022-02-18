@@ -85,10 +85,12 @@ public class MajorCourseRepositoryImpl implements MajorCourseRepositoryCustom {
 				.select(
 						Projections.constructor(
 								CourseDto.class,
+								course.id,
 								course.name,
 								course.number,
 								course.abeek,
 								course.credit,
+								majorCourse.isRequired,
 								course.semester
 						))
 				.from(majorCourse)
@@ -116,4 +118,26 @@ public class MajorCourseRepositoryImpl implements MajorCourseRepositoryCustom {
 				.join(majorCourse.course, course)
 				.fetch();
 	}
+
+	@Override
+	public List<CourseDto> findRequiredMajorCoursesByMajorId(Long majorId) {
+		String semester1 = "20212";
+		String semester2 = "20221";
+		return queryFactory
+				.select(
+						Projections.constructor(
+								CourseDto.class,
+								course.id,
+								course.name,
+								course.number,
+								course.abeek,
+								course.credit,
+								course.semester
+						))
+				.from(majorCourse)
+				.join(majorCourse.course, course)
+				.where(majorCourse.major.id.eq(majorId).and(majorCourse.isRequired.eq(true)).and(majorCourse.course.semester.eq(semester1).or(majorCourse.course.semester.eq(semester2))))
+				.fetch();
+	}
+
 }

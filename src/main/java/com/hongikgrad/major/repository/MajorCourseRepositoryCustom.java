@@ -13,4 +13,5 @@ public interface MajorCourseRepositoryCustom {
 	public List<CourseDto> findCourseDtosByMajorId(Long majorId);
 	public List<Course> findCoursesByMajor(Major major);
 	public List<Course> findCoursesByMajorId(Long majorId);
+	public List<CourseDto> findRequiredMajorCoursesByMajorId(Long majorId);
 }
