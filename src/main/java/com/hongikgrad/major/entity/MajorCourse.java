@@ -44,6 +44,10 @@ public class MajorCourse {
 		this.isRequired = isRequired;
 	}
 
+	public void toggleRequired() {
+		this.isRequired = !this.isRequired;
+	}
+
 	@Override
 	public boolean equals(Object a) {
 		return (a instanceof MajorCourse) && (((MajorCourse) a).getCourse().equals(this.getCourse())) && ((MajorCourse) a).getMajor() == this.getMajor();

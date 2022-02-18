@@ -29,7 +29,6 @@ public class UserCourseController {
             Integer totalCount = userTakenCourses.size();
             return new ResponseEntity(new UserTakenCourseDto(totalCredit, totalCount, userTakenCourses), HttpStatus.OK);
         } catch(InvalidDocumentException e) {
-            e.printStackTrace();
             return new ResponseEntity(HttpStatus.NETWORK_AUTHENTICATION_REQUIRED);
         } catch(Exception e) {
             e.printStackTrace();
