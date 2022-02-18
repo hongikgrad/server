@@ -24,9 +24,6 @@ public class GraduationController {
     ) {
         try {
             List<CourseDto> courseList = request.getCourseList();
-            for (CourseDto courseDto : courseList) {
-                System.out.println(courseDto.getName());
-            }
             List<RequirementDto> result = graduationService.getGraduationRequirementResult(request);
             return new ResponseEntity(result, HttpStatus.OK);
         } catch(Exception e) {

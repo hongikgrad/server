@@ -707,7 +707,7 @@ public class GraduationService {
 	}
 
 	private boolean isAbeekCourse(CourseDto course) {
-		return course != null && course.getAbeek().contains("MSC");
+		return course.getAbeek() != null && course.getAbeek().contains("MSC");
 	}
 
 	private boolean isSpecializedElective(CourseDto course) {
