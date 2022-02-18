@@ -5,6 +5,7 @@ import com.hongikgrad.course.dto.CourseDto;
 import com.hongikgrad.major.entity.Major;
 import com.hongikgrad.course.repository.CourseRepository;
 import com.hongikgrad.major.repository.MajorCourseRepository;
+import com.hongikgrad.major.repository.MajorHierarchyRepository;
 import com.hongikgrad.major.repository.MajorRepository;
 import com.hongikgrad.graduation.dto.*;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class GraduationService {
 	private final CourseRepository courseRepository;
 	private final MajorCourseRepository majorCourseRepository;
 	private final MajorRepository majorRepository;
+	private final MajorHierarchyRepository majorHierarchyRepository;
 
 	private final CookieService cookieService;
 
@@ -58,23 +60,32 @@ public class GraduationService {
 		checkDragonball(student, result);
 
 		// MSC
-		checkMSC(student, result);
+		if (isMajorInEngineering(student)) {
+			checkMSC(student, result);
+		}
 
 		// 특성화교양
-		if(student.getEnterYear() >= 19) {
+		if (isSpecializedElectiveRequired(student)) {
 			checkSpecializedElective(student, result);
 		}
 
+		checkMajorCourse(student, result);
+
 		// 필수전공
 		checkRequiredMajor(student, result);
-
-		// 전공학점
-		checkMajorCredit(student, result);
 
 		// 전체학점
 		checkTotalCredit(student, result);
 
 		return result;
+	}
+
+	private boolean isMajorInEngineering(StudentDto student) {
+		return student.getMajor().getCollege().equals("공과대학");
+	}
+
+	private boolean isSpecializedElectiveRequired(StudentDto student) {
+		return student.getEnterYear() >= 19;
 	}
 
 	private void checkMajorBasicEnglish(StudentDto student, List<RequirementDto> result) {
@@ -147,7 +158,7 @@ public class GraduationService {
 	}
 
 	private void checkMSC(StudentDto student, List<RequirementDto> result) {
-		Map<String, SubField> subFieldMap = getMSCSubFields();
+		Map<String, SubField> subFieldMap = getMSCSubFields(student.getMajor().getCode(), student.getEnterYear());
 		List<SubField> subFieldList = new ArrayList<>(subFieldMap.values());
 		List<CourseDto> takenCourses = student.getTakenCourses();
 		for (CourseDto course : takenCourses) {
@@ -196,29 +207,66 @@ public class GraduationService {
 		result.add(requirement);
 	}
 
+	private void checkMajorCourse(StudentDto student, List<RequirementDto> result) {
+		SubField subField = new SubField("전공", new ArrayList<>(), 0, false, "/courses?type=major&keyword=" + student.getMajor().getId());
+		takeMajorCourse(student, subField);
+		int totalCredit = getTotalCreditFromSubField(subField);
+		String briefing = getMajorBriefing(student.getMajor());
+		boolean isSatisfied = totalCredit >= 50;
+
+		RequirementDto requirement = new RequirementDto(
+				"전공",
+				totalCredit,
+				briefing,
+				isSatisfied,
+				subField
+		);
+		result.add(requirement);
+	}
+
+	private String getMajorBriefing(Major major) {
+		String college = major.getCollege();
+		switch(college) {
+			case "미술대학":
+				return "전공필수 모두 포함하여 전공 48학점 이상 이수\n" +
+						"(전공 48학점 내에는 전공기초과목이 포함되지 않음.)";
+			case "공과대학":
+				return "전공(전공필수 모두 포함) 50학점 이상 이수";
+			default:
+				return "";
+		}
+	}
+
 	private void checkRequiredMajor(StudentDto student, List<RequirementDto> result) {
-		Major major = student.getMajor();
-		SubField requiredMajor = new SubField("전공필수", new ArrayList<>(), 0, false);
-		List<CourseDto> takenCourses = student.getTakenCourses();
-		List<CourseDto> requiredCourse = getRequiredCourse(major);
+		SubField subField = new SubField("전공필수", new ArrayList<>(), 0, false, "/courses?type=required&keyword=" + student.getMajor().getId());
+		takeRequiredMajorCourse(student, subField);
 
-//		for (CourseDto course : takenCourses) {
-//			if (isRequiredMajor(course, requiredCourse)) {
-//				takeCourse(course, requiredMajor);
-//			}
-//		}
-
-		int totalCredit = getTotalCreditFromSubField(requiredMajor);
+		int totalCredit = getTotalCreditFromSubField(subField);
 		boolean isSatisfied = checkRequireMajorSatisfaction(student);
 		String briefing = "각 학과마다 지정된 전공필수 과목을 확인하세요!";
 
 		RequirementDto requirement = new RequirementDto(
 				"전공필수",
-				null,
+				totalCredit,
 				briefing,
-				isSatisfied
+				isSatisfied,
+				subField
 		);
 		result.add(requirement);
+	}
+
+	private void takeRequiredMajorCourse(StudentDto student, SubField subField) {
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		List<CourseDto> requiredCourse = getRequiredCourse(student.getMajor());
+		for (CourseDto course : takenCourses) {
+			if (isRequiredMajor(course, requiredCourse)) {
+				takeCourse(course, subField);
+			}
+		}
+	}
+
+	private void checkMajorCSOver20(StudentDto student, List<RequirementDto> result) {
+		List<CourseDto> takenCourses = student.getTakenCourses();
 	}
 
 	private void checkMajorCredit(StudentDto student, List<RequirementDto> result) {
@@ -270,6 +318,7 @@ public class GraduationService {
 	}
 
 	private void takeCourse(CourseDto course, SubField subField) {
+		if(course == null || subField == null) return;
 		List<CourseDto> courseList = subField.getCourseList();
 		courseList.add(course);
 		subField.setTotalCredit(subField.getTotalCredit() + course.getCredit());
@@ -286,9 +335,9 @@ public class GraduationService {
 		SubField science = subFieldMap.get("MSC과학");
 		SubField computer = subFieldMap.get("MSC전산");
 
-		Integer mathCredit = math.getTotalCredit();
-		Integer scienceCredit = science.getTotalCredit();
-		Integer computerCredit = computer.getTotalCredit();
+		int mathCredit = math == null ? 0 : math.getTotalCredit();
+		int scienceCredit = science == null ? 0 : science.getTotalCredit();
+		int computerCredit = computer == null ? 0 : computer.getTotalCredit();
 
 		if (isAbeek) {
 			// 전체 학점 검사
@@ -392,8 +441,14 @@ public class GraduationService {
 					return "MSC 과학분야 내 상기의 대학화학, 대학물리에 대한 별도 이수 요건 없이 MSC 수학분야 및 과학분야 내 과목 이수학점 합이 18학점 이상 되면 인정함.\n" +
 							"<정보시스템개론, 웹프로그래밍, C-프로그래밍> 중 6학점을 이수해야 함.\n";
 				}
+			} else if(majorCode.equals("CS")) {
+				return "18학점 이상 이수하여야함\n" +
+						"MSC 과학분야 중\n" +
+						"대학물리(1), 대학물리실험(1), 대학화학(1), 대학화학실험(1)을 반드시 이수하여야 하고,\n" +
+						"{대학물리(2), 대학물리실험(2)} 와 {대학화학(2), 대학화학실험(2)} 둘 중 택일하여 이수하여야 함.\n";
+
 			} else {
-				return "24학점 이상 이수하여야 함. (단, 컴퓨터공학전공은 18학점 이상)\n" +
+				return "24학점 이상 이수하여야 함.\n" +
 						"MSC 과학분야 중\n" +
 						"대학물리(1), 대학물리실험(1), 대학화학(1), 대학화학실험(1)을 반드시 이수하여야 하고,\n" +
 						"{대학물리(2), 대학물리실험(2)} 와 {대학화학(2), 대학화학실험(2)} 둘 중 택일하여 이수하여야 함.\n";
@@ -401,6 +456,18 @@ public class GraduationService {
 		}
 
 		return null;
+	}
+
+	private void takeMajorCourse(StudentDto student, SubField subField) {
+		Major studentMajor = student.getMajor();
+		int enterYear = student.getEnterYear();
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		List<CourseDto> majorCourseList = getMajorCourseList(studentMajor, enterYear);
+		takenCourses.forEach(courseDto -> {
+			if (majorCourseList.contains(courseDto)) {
+				takeCourse(courseDto, subField);
+			}
+		});
 	}
 
 	private void notTakeMajorBasicEnglish(List<RequirementDto> result) {
@@ -461,6 +528,21 @@ public class GraduationService {
 		subFields.put("MSC수학", math);
 		subFields.put("MSC과학", science);
 		subFields.put("MSC전산", computer);
+		return subFields;
+	}
+
+	private Map<String, SubField> getMSCSubFields(String majorCode, int enterYear) {
+		SubField math = new SubField("MSC수학", new ArrayList<>(), 0, false);
+		SubField science = new SubField("MSC과학", new ArrayList<>(), 0, false);
+		SubField computer = new SubField("MSC전산", new ArrayList<>(), 0, false);
+
+		Map<String, SubField> subFields = new HashMap<>();
+		subFields.put("MSC수학", math);
+		subFields.put("MSC과학", science);
+		subFields.put("MSC전산", computer);
+		if(isMajorCSAndUnder19(majorCode, enterYear)) {
+			subFields.remove("MSC전산");
+		}
 		return subFields;
 	}
 
@@ -551,7 +633,7 @@ public class GraduationService {
 	}
 
 	private boolean isAbeekCourse(CourseDto course) {
-		return course.getAbeek().contains("MSC");
+		return course != null && course.getAbeek().contains("MSC");
 	}
 
 	private boolean isSpecializedElective(CourseDto course) {
@@ -594,5 +676,31 @@ public class GraduationService {
 
 	private String getCourseUrl(String type, String keyword) {
 		return "/courses?" + "type=" + type + "&keyword=" + keyword;
+	}
+
+	private List<CourseDto> getMajorCourseList(Major major, int enterYear) {
+		List<CourseDto> majorCourseList = majorHierarchyRepository.findAllMajorCoursesByMaster(major);
+		String majorCode = major.getCode();
+		if(majorCode.equals("CS")) {
+			return getCSMajorCourseList(enterYear);
+		}
+		return majorCourseList;
+	}
+
+	private List<CourseDto> getCSMajorCourseList(int enterYear) {
+		List<CourseDto> majorCourseList = majorHierarchyRepository.findAllMajorCoursesByMaster("CS");
+		if(enterYear >= 20) {
+			majorCourseList.removeIf(courseDto -> {
+				String courseNumber = courseDto.getNumber();
+				return courseNumber.equals("004174")
+						|| courseNumber.equals("101810")
+						|| courseNumber.equals("012305");
+			});
+		}
+		return majorCourseList;
+	}
+
+	private boolean isMajorCSAndUnder19(String majorCode, int enterYear) {
+		return majorCode.equals("CS") && enterYear <= 19;
 	}
 }
