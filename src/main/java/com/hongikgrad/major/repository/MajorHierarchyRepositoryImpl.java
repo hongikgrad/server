@@ -1,8 +1,10 @@
 package com.hongikgrad.major.repository;
 
 import com.hongikgrad.course.dto.CourseDto;
+import com.hongikgrad.graduation.dto.StudentDto;
 import com.hongikgrad.major.dto.MajorDto;
 import com.hongikgrad.major.entity.Major;
+import com.hongikgrad.major.entity.QMajor;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -102,7 +104,58 @@ public class MajorHierarchyRepositoryImpl implements MajorHierarchyRepositoryCus
 				.join(majorCourse.major, major).on(eqAnyMajor(majorId, slaveList))
 				.join(majorCourse.course, course).on(majorCourse.course.eq(course))
 				.fetch();
+
 		return majorCourseList.stream().distinct().collect(Collectors.toList());
+	}
+
+	@Override
+	public List<CourseDto> findAllMajorCoursesByMaster(StudentDto student) {
+		Major studentMajor = student.getMajor();
+
+		List<Major> slaveList = queryFactory
+				.select(majorHierarchy.slave)
+				.from(majorHierarchy)
+				.join(majorHierarchy.master, major)
+				.on(majorHierarchy.master.eq(studentMajor))
+				.fetch();
+
+		List<CourseDto> majorCourseList = queryFactory
+				.select(Projections.constructor(CourseDto.class,
+						course.name,
+						course.number,
+						course.abeek,
+						course.credit,
+						course.semester
+				))
+				.from(majorCourse)
+				.join(majorCourse.major, major).on(eqAnyMajor(studentMajor, slaveList))
+				.join(majorCourse.course, course).on(majorCourse.course.eq(course))
+				.fetch().stream().distinct().collect(Collectors.toList());
+
+		filterMajorCourse(studentMajor, student.getEnterYear(), majorCourseList);
+
+		return majorCourseList;
+	}
+
+	private void filterMajorCourse(Major studentMajor, int enterYear, List<CourseDto> majorCourseList) {
+		String majorCode = studentMajor.getCode();
+		String college = studentMajor.getCollege();
+		if(majorCode.equals("CS") && enterYear >= 20) {
+			majorCourseList.removeIf(courseDto -> {
+				String courseNumber = courseDto.getNumber();
+				return courseNumber.equals("004174")
+						|| courseNumber.equals("101810")
+						|| courseNumber.equals("012305");
+			});
+		}
+
+		if (college.equals("미술대학")) {
+			majorCourseList.removeIf(courseDto -> courseDto.getNumber().equals("400101")
+					|| courseDto.getNumber().equals("400102")
+					|| courseDto.getNumber().equals("400201")
+					|| courseDto.getNumber().equals("400202")
+			);
+		}
 	}
 
 	private BooleanExpression eqAnyMajor(Long masterId, List<Major> slaveList) {
@@ -132,4 +185,31 @@ public class MajorHierarchyRepositoryImpl implements MajorHierarchyRepositoryCus
 		return ret;
 	}
 
+	@Override
+	public List<CourseDto> findAllMajorCoursesByMaster(Major studentMajor, int enterYear) {
+
+		List<Major> slaveList = queryFactory
+				.select(majorHierarchy.slave)
+				.from(majorHierarchy)
+				.join(majorHierarchy.master, major)
+				.on(majorHierarchy.master.eq(studentMajor))
+				.fetch();
+
+		List<CourseDto> majorCourseList = queryFactory
+				.select(Projections.constructor(CourseDto.class,
+						course.name,
+						course.number,
+						course.abeek,
+						course.credit,
+						course.semester
+				))
+				.from(majorCourse)
+				.join(majorCourse.major, major).on(eqAnyMajor(studentMajor, slaveList))
+				.join(majorCourse.course, course).on(majorCourse.course.eq(course))
+				.fetch().stream().distinct().collect(Collectors.toList());
+
+		filterMajorCourse(studentMajor, enterYear, majorCourseList);
+
+		return majorCourseList;
+	}
 }
