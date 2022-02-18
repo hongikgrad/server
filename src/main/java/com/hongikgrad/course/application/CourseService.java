@@ -231,21 +231,45 @@ public class CourseService {
 		Elements semesterTableList = getValidTableElements(body);
 
 		for (Element table : semesterTableList) {
+			Element tableHead = table.selectFirst("thead");
+			int courseNumberIndex = getCourseNumberIndex(tableHead);
+			int courseCreditIndex = getCourseCreditIndex(tableHead);
+
 			Element tableBody = table.selectFirst("tbody");
 			if(tableBody == null) continue;
 			Elements tableRows = tableBody.children();
-			extractCourseData(tableRows, courseDtoList);
+			extractCourseData(tableRows, courseDtoList, courseNumberIndex, courseCreditIndex);
 		}
 		return courseDtoList;
 	}
 
-	private void extractCourseData(Elements tableRows, List<CourseDto> courseDtoList) {
+	private int getColumnIndex(Element tableHead, String columnText) {
+		if(tableHead == null) return -1;
+		Element row = tableHead.child(0);
+		for(int index = 0; index < row.childrenSize(); index++) {
+			String text = row.child(index).text();
+			if (text.equals(columnText)) {
+				return index;
+			}
+		}
+		return 0;
+	}
+
+	private int getCourseCreditIndex(Element tableHead) {
+		return getColumnIndex(tableHead, "학점");
+	}
+
+	private int getCourseNumberIndex(Element tableHead) {
+		return getColumnIndex(tableHead, "학수번호");
+	}
+
+	private void extractCourseData(Elements tableRows, List<CourseDto> courseDtoList, int courseNumberIndex, int courseCreditIndex) {
 		try {
 			for (Element tableRow : tableRows) {
 				if (!isCourseInfoRow(tableRow)) continue;
 				if (isRetakenCourse(tableRow)) continue;
-				Element courseNumberElement = tableRow.child(0);
-				Element courseCreditElement = tableRow.child(3);
+				Element courseNumberElement = tableRow.child(courseNumberIndex);
+				Element courseCreditElement = tableRow.child(courseCreditIndex);
 				String courseNumber = getTextFromElement(courseNumberElement);
 				int courseCredit = Integer.parseInt(getTextFromElement(courseCreditElement));
 				findAndSaveCourse(courseNumber, courseCredit, courseDtoList);
