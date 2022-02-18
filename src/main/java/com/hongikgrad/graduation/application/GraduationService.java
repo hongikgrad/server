@@ -282,11 +282,17 @@ public class GraduationService {
 			Integer totalCredit = getTotalCreditFromSubField(subFieldList);
 			return totalCredit >= 50;
 		} else if(college.equals("미술대학")) {
-			SubField majorSubfield = subFieldList.get(0);
-			Integer totalCreditFromMajor = getTotalCreditFromSubField(majorSubfield);
-			SubField commonMajorSubfield = subFieldList.get(1);
-			Integer totalCreditFromCommonMajor = getTotalCreditFromSubField(commonMajorSubfield);
-			return totalCreditFromMajor >= 48 && totalCreditFromCommonMajor >= 4;
+			for (SubField subField : subFieldList) {
+				String field = subField.getField();
+				if(field.equals("전공기초") && getTotalCreditFromSubField(subField) < 6) {
+					return false;
+				} else if(field.equals("미술대학 공통 전공선택") && getTotalCreditFromSubField(subField) < 4) {
+					return false;
+				} else if(field.equals("전공") && getTotalCreditFromSubField(subField) < 48) {
+					return false;
+				}
+			}
+			return true;
 		}
 		return false;
 	}
