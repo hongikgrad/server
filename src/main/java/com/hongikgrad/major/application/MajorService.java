@@ -28,28 +28,4 @@ public class MajorService {
 	public List<Major> getEnableMajorList() {
 		return majorRepository.findAllByEnableTrue();
 	}
-
-	public void mergeMajor(Long masterId, Long slaveId) {
-		Major master = majorRepository.findMajorById(masterId);
-		Major slave = majorRepository.findMajorById(slaveId);
-
-		List<Course> slaveCourseList = majorCourseRepository.findCoursesByMajor(slave);
-		for (Course slaveCourse : slaveCourseList) {
-			MajorCourse majorCourse = new MajorCourse(master, slaveCourse);
-			if(!majorCourseRepository.existsMajorCourseByMajorAndCourse(master, slaveCourse)) {
-				majorCourseRepository.save(majorCourse);
-			}
-		}
-	}
-
-	public void unMergeMajor(Long masterId, Long slaveId) {
-		List<Course> masterCourseList = majorCourseRepository.findCoursesByMajorId(masterId);
-		List<Course> slaveCourseList = majorCourseRepository.findCoursesByMajorId(slaveId);
-
-		Major master = majorRepository.findMajorById(masterId);
-
-		for (Course slaveCourse : slaveCourseList) {
-			majorCourseRepository.delete(new MajorCourse(master, slaveCourse));
-		}
-	}
 }

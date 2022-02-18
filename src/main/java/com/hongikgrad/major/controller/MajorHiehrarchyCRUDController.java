@@ -31,7 +31,7 @@ public class MajorHiehrarchyCRUDController {
 			Major slave = majorRepository.findMajorById(slaveId);
 
 			MajorHierarchy saved = majorHierarchyRepository.save(new MajorHierarchy(master, slave));
-			majorService.mergeMajor(masterId, slaveId);
+//			majorService.mergeMajor(masterId, slaveId);
 			return new ResponseEntity(saved, HttpStatus.OK);
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -44,7 +44,7 @@ public class MajorHiehrarchyCRUDController {
 		try {
 			MajorHierarchy target = majorHierarchyRepository.findMajorHierarchyByMasterIdAndSlaveId(masterId, slaveId);
 			majorHierarchyRepository.delete(target);
-			majorService.unMergeMajor(masterId, slaveId);
+//			majorService.unMergeMajor(masterId, slaveId);
 			return new ResponseEntity(HttpStatus.OK);
 		} catch(Exception e) {
 			e.printStackTrace();
