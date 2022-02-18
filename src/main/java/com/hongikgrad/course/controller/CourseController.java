@@ -17,10 +17,11 @@ public class CourseController {
 
 	@GetMapping("/courses")
 	public ResponseEntity searchCourse(@RequestParam(value = "keyword", required = false) String keyword,
-	                                     @RequestParam(value = "type", required = false) String type
-	) {
+	                                   @RequestParam(value = "type", required = false) String type,
+	                                   @RequestParam(value = "year", required = false) int enterYear
+	                                   ) {
 		try {
-			List<CourseDto> result = courseService.search(keyword, type);
+			List<CourseDto> result = courseService.search(keyword, type, enterYear);
 			return new ResponseEntity(result, HttpStatus.OK);
 		} catch (Exception e) {
 			e.printStackTrace();

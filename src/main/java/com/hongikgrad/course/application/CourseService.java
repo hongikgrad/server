@@ -1,8 +1,6 @@
 package com.hongikgrad.course.application;
 
-import com.hongikgrad.common.application.CookieService;
 import com.hongikgrad.common.crawler.CourseCrawler;
-import com.hongikgrad.common.crawler.UserCourseCrawler;
 import com.hongikgrad.course.dto.*;
 import com.hongikgrad.course.entity.Course;
 import com.hongikgrad.course.exception.InvalidCookieException;
@@ -49,14 +47,14 @@ public class CourseService {
 		allCourses = courseRepository.findAllCourseDto();
 	}
 
-	public List<CourseDto> search(String keyword, String type) {
+	public List<CourseDto> search(String keyword, String type, int enterYear) {
 		switch (type) {
 			case "name":
 				return searchByName(keyword);
 			case "number":
 				return searchByNumber(keyword);
 			case "major":
-				return searchByMajor(keyword);
+				return searchByMajor(keyword, enterYear);
 			case "grad":
 				return searchByGraduation(keyword);
 			case "required":
@@ -98,10 +96,10 @@ public class CourseService {
 	}
 
 	@Transactional(readOnly = true)
-	List<CourseDto> searchByMajor(String major) {
+	List<CourseDto> searchByMajor(String major, int enterYear) {
 		Long majorId = Long.parseLong(major);
-//		return majorCourseRepository.findCourseDtosByMajorId(majorId);
-		return majorHierarchyRepository.findAllMajorCoursesByMaster(majorId);
+		Major studentMajor = majorRepository.findMajorById(majorId);
+		return majorHierarchyRepository.findAllMajorCoursesByMaster(studentMajor, enterYear);
 	}
 
 	@Transactional(readOnly = true)
@@ -206,11 +204,9 @@ public class CourseService {
 				}
 			}
 //            return new MajorCourseListDto(majorCourses, courses);
-		} catch (IndexOutOfBoundsException e) {
+		} catch (IndexOutOfBoundsException | InvalidDocumentException e) {
 			e.printStackTrace();
 //            return null;
-		} catch (InvalidDocumentException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -220,8 +216,7 @@ public class CourseService {
 
 	/* 유저가 들은 수업들을 반환 */
 	public List<CourseDto> loadUserTakenCourses(HttpServletRequest request) throws InvalidCookieException, InvalidDocumentException {
-		List<CourseDto> userTakenCourses = getUserTakenCoursesFromClassnetV2(request);
-		return userTakenCourses;
+		return getUserTakenCoursesFromClassnetV2(request);
 	}
 
 	public List<CourseDto> getUserTakenCoursesFromClassnetV2(HttpServletRequest request) throws InvalidDocumentException, InvalidCookieException {
@@ -296,14 +291,12 @@ public class CourseService {
 
 	private Boolean isRetakenCourse(Element tableRow) {
 		Elements children = tableRow.children();
-		if(children.last().text().equals("재수강") || children.last().previousElementSibling().text().equals("F"))
-			return true;
-		return false;
+		if(children.last() == null || children.last().previousElementSibling() == null) return false;
+		return children.last().text().equals("재수강") || children.last().previousElementSibling().text().equals("F");
 	}
 
 	private Boolean isCourseInfoRow(Element tableRow) {
-		if(tableRow == null || tableRow.childrenSize() < 4) return false;
-		return true;
+		return tableRow != null && tableRow.childrenSize() >= 4;
 	}
 
 	private Elements getValidTableElements(Element body) throws InvalidDocumentException {
@@ -329,10 +322,9 @@ public class CourseService {
 	}
 
 	private Boolean hasElementChildTable(Element element) {
-		if(element.children() != null
+		return element.children() != null
 				&& element.childrenSize() >= 1
-				&& element.children().first().is("table")) return true;
-		return false;
+				&& element.children().first().is("table");
 	}
 
 	public List<CourseDto> getUserTakenCoursesFromClassnet(HttpServletRequest request) throws InvalidCookieException, InvalidDocumentException {
@@ -388,4 +380,34 @@ public class CourseService {
 		}
 		return ret;
 	}
+
+//	private List<CourseDto> getMajorCourseList(Major major, int enterYear) {
+//		List<CourseDto> majorCourseList = majorHierarchyRepository.findAllMajorCoursesByMaster(major);
+//		String majorCode = major.getCode();
+//		String college = major.getCollege();
+//		if (college.equals("미술대학")) {
+//			majorCourseList.removeIf(courseDto -> courseDto.getNumber().equals("400101")
+//					|| courseDto.getNumber().equals("400102")
+//					|| courseDto.getNumber().equals("400201")
+//					|| courseDto.getNumber().equals("400202")
+//			);
+//		}
+//		if (majorCode.equals("CS")) {
+//			return getCSMajorCourseList(enterYear);
+//		}
+//		return majorCourseList;
+//	}
+//
+//	private List<CourseDto> getCSMajorCourseList(int enterYear) {
+//		List<CourseDto> majorCourseList = majorHierarchyRepository.findAllMajorCoursesByMaster("CS");
+//		if (enterYear >= 20) {
+//			majorCourseList.removeIf(courseDto -> {
+//				String courseNumber = courseDto.getNumber();
+//				return courseNumber.equals("004174")
+//						|| courseNumber.equals("101810")
+//						|| courseNumber.equals("012305");
+//			});
+//		}
+//		return majorCourseList;
+//	}
 }
