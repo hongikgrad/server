@@ -69,6 +69,12 @@ public class GraduationService {
 			checkSpecializedElective(student, result);
 		}
 
+//		 미대 전공 공통
+//		if (isMajorInArt(student)) {
+//			checkArtCollegeCommonMajor(student, result);
+//		}
+
+		// 전공
 		checkMajorCourse(student, result);
 
 		// 필수전공
@@ -80,12 +86,20 @@ public class GraduationService {
 		return result;
 	}
 
-	private boolean isMajorInEngineering(StudentDto student) {
-		return student.getMajor().getCollege().equals("공과대학");
+	private void checkArtCollegeCommonMajor(StudentDto student, List<SubField> subFieldList) {
+		SubField subField = new SubField("미술대학 공통 전공선택", new ArrayList<>(), 0, false, "/courses?type=major&keyword=25");
+		takeArtCollegeCommonMajor(student, subField);
+		subFieldList.add(subField);
 	}
 
-	private boolean isSpecializedElectiveRequired(StudentDto student) {
-		return student.getEnterYear() >= 19;
+	private void takeArtCollegeCommonMajor(StudentDto student, SubField subField) {
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		List<CourseDto> majorCourseList = majorCourseRepository.findCourseDtosByMajorId(25L);
+		takenCourses.forEach(courseDto -> {
+			if (majorCourseList.contains(courseDto)) {
+				takeCourse(courseDto, subField);
+			}
+		});
 	}
 
 	private void checkMajorBasicEnglish(StudentDto student, List<RequirementDto> result) {
@@ -208,20 +222,73 @@ public class GraduationService {
 	}
 
 	private void checkMajorCourse(StudentDto student, List<RequirementDto> result) {
+		List<SubField> subFieldList = new ArrayList<>();
 		SubField subField = new SubField("전공", new ArrayList<>(), 0, false, "/courses?type=major&keyword=" + student.getMajor().getId());
 		takeMajorCourse(student, subField);
-		int totalCredit = getTotalCreditFromSubField(subField);
+		if(isMajorInArt(student)) {
+			checkArtBasicMajor(student, subFieldList);
+			checkArtCollegeCommonMajor(student, subFieldList);
+		}
+		subFieldList.add(subField);
+
+		int totalCredit = getTotalCreditFromSubField(subFieldList);
 		String briefing = getMajorBriefing(student.getMajor());
-		boolean isSatisfied = totalCredit >= 50;
+		boolean isSatisfied = checkMajorSatisfaction(student, subFieldList);
 
 		RequirementDto requirement = new RequirementDto(
 				"전공",
 				totalCredit,
 				briefing,
 				isSatisfied,
-				subField
+				subFieldList
 		);
 		result.add(requirement);
+	}
+
+	private void checkArtBasicMajor(StudentDto student, List<SubField> subFieldList) {
+		SubField subField = new SubField("전공기초", new ArrayList<>(), 0, false);
+		takeArtBasicMajor(student, subField);
+		subFieldList.add(subField);
+	}
+
+	private void takeArtBasicMajor(StudentDto student, SubField subField) {
+		List<CourseDto> takenCourses = student.getTakenCourses();
+		List<CourseDto> artBasicMajorList = new ArrayList<>();
+		artBasicMajorList.add(new CourseDto("400101", 3));
+		artBasicMajorList.add(new CourseDto("400102", 3));
+		if (isFineArt(student.getMajor())) {
+			artBasicMajorList.add(new CourseDto("400201", 3));
+			artBasicMajorList.add(new CourseDto("400202", 3));
+		}
+		takenCourses.forEach(courseDto -> {
+			if (artBasicMajorList.contains(courseDto)) {
+				takeCourse(courseDto, subField);
+			}
+		});
+
+	}
+
+	private boolean isFineArt(Major major) {
+		String majorCode = major.getCode();
+		return majorCode.equals("DONGYANG")
+				|| majorCode.equals("PANHWA")
+				|| majorCode.equals("HOIHWA")
+				|| majorCode.equals("JOSO");
+	}
+
+	private boolean checkMajorSatisfaction(StudentDto student, List<SubField> subFieldList) {
+		String college = student.getMajor().getCollege();
+		if(college.equals("공과대학")) {
+			Integer totalCredit = getTotalCreditFromSubField(subFieldList);
+			return totalCredit >= 50;
+		} else if(college.equals("미술대학")) {
+			SubField majorSubfield = subFieldList.get(0);
+			Integer totalCreditFromMajor = getTotalCreditFromSubField(majorSubfield);
+			SubField commonMajorSubfield = subFieldList.get(1);
+			Integer totalCreditFromCommonMajor = getTotalCreditFromSubField(commonMajorSubfield);
+			return totalCreditFromMajor >= 48 && totalCreditFromCommonMajor >= 4;
+		}
+		return false;
 	}
 
 	private String getMajorBriefing(Major major) {
@@ -229,7 +296,11 @@ public class GraduationService {
 		switch(college) {
 			case "미술대학":
 				return "전공필수 모두 포함하여 전공 48학점 이상 이수\n" +
-						"(전공 48학점 내에는 전공기초과목이 포함되지 않음.)";
+						"(전공 48학점 내에는 전공기초과목이 포함되지 않음.)\n\n" +
+						"미술대학 공통 전공선택 과목 중 2과목(4학점)을 필수로 이수하여야 함.(최대 8학점까지 인정)\n" +
+						"전공기초과목 이수 : \n" +
+						"모든 미술대학(예술학과 제외)은 기초평면(1), 기초입체(1)을 필수로 이수하여야 하며,\n" +
+						"순수분야(동양,회화,조소,판화)는 기초평면(2),기초입체(2)도 필수로 이수하여야 함.";
 			case "공과대학":
 				return "전공(전공필수 모두 포함) 50학점 이상 이수";
 			default:
@@ -263,10 +334,6 @@ public class GraduationService {
 				takeCourse(course, subField);
 			}
 		}
-	}
-
-	private void checkMajorCSOver20(StudentDto student, List<RequirementDto> result) {
-		List<CourseDto> takenCourses = student.getTakenCourses();
 	}
 
 	private void checkMajorCredit(StudentDto student, List<RequirementDto> result) {
@@ -310,7 +377,7 @@ public class GraduationService {
 		RequirementDto requirement = new RequirementDto(
 				"전체 수강학점",
 				totalCredit,
-				"총 132학점 이상(일반선택 포함) 이수하여야 함.",
+				"총 132학점 이상(일반선택 포함) 이수하여야 함.\n" + "단, 교양과목(교양필수 및 교양선택)은 최대 50학점까지만 인정됨.",
 				isSatisfied
 		);
 
@@ -591,6 +658,7 @@ public class GraduationService {
 	private Integer getTotalCreditFromSubField(List<SubField> subFields) {
 		Integer totalCredit = 0;
 		for (SubField subField : subFields) {
+			if(subField.getField().equals("전공기초")) continue;
 			totalCredit += subField.getTotalCredit();
 		}
 		return totalCredit;
@@ -681,6 +749,14 @@ public class GraduationService {
 	private List<CourseDto> getMajorCourseList(Major major, int enterYear) {
 		List<CourseDto> majorCourseList = majorHierarchyRepository.findAllMajorCoursesByMaster(major);
 		String majorCode = major.getCode();
+		String college = major.getCollege();
+		if(college.equals("미술대학")) {
+			majorCourseList.removeIf(courseDto -> courseDto.getNumber().equals("400101")
+					|| courseDto.getNumber().equals("400102")
+					|| courseDto.getNumber().equals("400201")
+					|| courseDto.getNumber().equals("400202")
+			);
+		}
 		if(majorCode.equals("CS")) {
 			return getCSMajorCourseList(enterYear);
 		}
@@ -702,5 +778,17 @@ public class GraduationService {
 
 	private boolean isMajorCSAndUnder19(String majorCode, int enterYear) {
 		return majorCode.equals("CS") && enterYear <= 19;
+	}
+
+	private boolean isMajorInArt(StudentDto student) {
+		return student.getMajor().getCollege().equals("미술대학");
+	}
+
+	private boolean isMajorInEngineering(StudentDto student) {
+		return student.getMajor().getCollege().equals("공과대학");
+	}
+
+	private boolean isSpecializedElectiveRequired(StudentDto student) {
+		return student.getEnterYear() >= 19;
 	}
 }
