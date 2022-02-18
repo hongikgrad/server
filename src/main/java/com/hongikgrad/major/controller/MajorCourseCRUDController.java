@@ -28,8 +28,8 @@ public class MajorCourseCRUDController {
 	public ResponseEntity majorCourseGET(HttpServletRequest request, @PathVariable("majorId") Long majorId) throws AuthenticationException {
 		try {
 			userService.authenticateAdmin(request);
-			Major major = majorRepository.findMajorById(majorId);
-			return new ResponseEntity(majorCourseRepository.findCoursesByMajor(major), HttpStatus.OK);
+//			Major major = majorRepository.findMajorById(majorId);
+			return new ResponseEntity(majorCourseRepository.findCourseDtosByMajorId(majorId), HttpStatus.OK);
 		} catch(Exception e) {
 			return new ResponseEntity(HttpStatus.BAD_REQUEST);
 		}
@@ -49,6 +49,20 @@ public class MajorCourseCRUDController {
 			return new ResponseEntity(HttpStatus.BAD_REQUEST);
 		}
 	}
+
+	@PatchMapping("/admin/majors/{majorId}/courses/{courseId}")
+	public ResponseEntity majorCoursePATCH(@PathVariable("majorId") Long majorId, @PathVariable("courseId") Long courseId, HttpServletRequest request) throws AuthenticationException {
+		try {
+			userService.authenticateAdmin(request);
+			MajorCourse majorCourse = majorCourseRepository.findMajorCourseByCourseIdAndMajorId(courseId, majorId);
+			majorCourse.toggleRequired();
+			majorCourseRepository.save(majorCourse);
+			return new ResponseEntity(HttpStatus.OK);
+		} catch(Exception e) {
+			return new ResponseEntity(HttpStatus.BAD_REQUEST);
+		}
+	}
+
 
 	@DeleteMapping("/admin/majors/{majorId}/courses/{courseId}")
 	public ResponseEntity majorCourseDELETE(@PathVariable("majorId") Long majorId, @PathVariable("courseId") Long courseId, HttpServletRequest request) throws AuthenticationException {
