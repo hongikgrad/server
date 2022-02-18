@@ -11,6 +11,7 @@ import com.hongikgrad.major.entity.Major;
 import com.hongikgrad.major.entity.MajorCourse;
 import com.hongikgrad.course.repository.CourseRepository;
 import com.hongikgrad.major.repository.MajorCourseRepository;
+import com.hongikgrad.major.repository.MajorHierarchyRepository;
 import com.hongikgrad.major.repository.MajorRepository;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
@@ -35,11 +36,9 @@ public class CourseService {
 	private final CourseRepository courseRepository;
 	private final MajorRepository majorRepository;
 	private final MajorCourseRepository majorCourseRepository;
+	private final MajorHierarchyRepository majorHierarchyRepository;
 
-	private final UserCourseCrawler userCourseCrawler;
 	private final CourseCrawler courseCrawler;
-
-	private final CookieService cookieService;
 
 	private List<CourseDto> allCourses;
 
@@ -60,9 +59,16 @@ public class CourseService {
 				return searchByMajor(keyword);
 			case "grad":
 				return searchByGraduation(keyword);
+			case "required":
+				return searchByMajorRequired(keyword);
 			default:
 				return null;
 		}
+	}
+
+	private List<CourseDto> searchByMajorRequired(String keyword) {
+		Long majorId = Long.parseLong(keyword);
+		return majorCourseRepository.findRequiredMajorCoursesByMajorId(majorId);
 	}
 
 	@Transactional(readOnly = true)
@@ -77,7 +83,10 @@ public class CourseService {
 			case "majorenglish":
 				return courseRepository.findMajorEnglishCourses();
 		}
-		return allCourses.stream().filter(courseDto -> courseDto.getAbeek().contains(keyword)).collect(Collectors.toList());
+		return allCourses.stream()
+				.filter(courseDto -> Objects.nonNull(courseDto.getAbeek()))
+				.filter(courseDto -> courseDto.getAbeek().contains(keyword))
+				.collect(Collectors.toList());
 	}
 
 	private List<CourseDto> searchByName(String name) {
@@ -91,7 +100,8 @@ public class CourseService {
 	@Transactional(readOnly = true)
 	List<CourseDto> searchByMajor(String major) {
 		Long majorId = Long.parseLong(major);
-		return majorCourseRepository.findCourseDtosByMajorId(majorId);
+//		return majorCourseRepository.findCourseDtosByMajorId(majorId);
+		return majorHierarchyRepository.findAllMajorCoursesByMaster(majorId);
 	}
 
 	@Transactional(readOnly = true)
