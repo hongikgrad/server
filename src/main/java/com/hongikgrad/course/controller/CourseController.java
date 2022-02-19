@@ -21,7 +21,11 @@ public class CourseController {
 	                                   @RequestParam(value = "year", required = false) String year
 	                                   ) {
 		try {
-			List<CourseDto> result = courseService.search(keyword, type, Integer.parseInt(year));
+			int enterYear = Integer.parseInt(year);
+			List<CourseDto> result = courseService.search(keyword, type, enterYear);
+			return new ResponseEntity(result, HttpStatus.OK);
+		} catch(NumberFormatException e) {
+			List<CourseDto> result = courseService.search(keyword, type, 0);
 			return new ResponseEntity(result, HttpStatus.OK);
 		} catch (Exception e) {
 			e.printStackTrace();
