@@ -1,6 +1,7 @@
 package com.hongikgrad;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.LegacyCookieProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,10 +16,12 @@ import javax.persistence.EntityManager;
 
 @EnableJpaAuditing
 @SpringBootApplication
+@Slf4j
 public class HongikGradApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(HongikGradApplication.class, args);
+		log.warn("SERVER ON");
 		System.out.println(" _______  _______  _______           _______  _______    _______ _________ _______  _______ _________\n" +
 				"(  ____ \\(  ____ \\(  ____ )|\\     /|(  ____ \\(  ____ )  (  ____ \\\\__   __/(  ___  )(  ____ )\\__   __/\n" +
 				"| (    \\/| (    \\/| (    )|| )   ( || (    \\/| (    )|  | (    \\/   ) (   | (   ) || (    )|   ) (   \n" +
