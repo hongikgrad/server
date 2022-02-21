@@ -186,7 +186,18 @@ public class GraduationService {
 			}
 		}
 
+		if (isMajorCS(student)) {
+			// 컴공 수치해석 -> MSC수학
+			SubField math = subFieldMap.get("MSC수학");
+			for (CourseDto course : takenCourses) {
+				if(isNumericalAnalysis(course)) {
+					takeCourse(course, math);
+				}
+			}
+		}
+
 		if (isMajorCSAndOverEqual20(student)) {
+			// 컴공, 20학번 이상 -> MSC전산 지정과목 수강 필수
 			SubField computer = new SubField("MSC전산", new ArrayList<>(), 0, false);
 			for (CourseDto course : takenCourses) {
 				if (isCPrpgramming(course) || isInformationSystem(course) || isOOP(course)) {
@@ -207,6 +218,10 @@ public class GraduationService {
 				subFieldList
 		);
 		result.add(requirement);
+	}
+
+	private boolean isNumericalAnalysis(CourseDto course) {
+		return course.getNumber().equals("012308");
 	}
 
 	private void checkSpecializedElective(StudentDto student, List<RequirementDto> result) {
@@ -770,6 +785,10 @@ public class GraduationService {
 
 	private boolean isMajorCSAndUnder19(String majorCode, int enterYear) {
 		return majorCode.equals("CS") && enterYear <= 19;
+	}
+
+	private boolean isMajorCS(StudentDto student) {
+		return student.getMajor().getCode().equals("CS");
 	}
 
 	private boolean isMajorCS(String majorCode) {
