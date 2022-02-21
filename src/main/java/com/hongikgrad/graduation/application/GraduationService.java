@@ -147,6 +147,12 @@ public class GraduationService {
 			}
 		}
 
+		if(isMajorCSAndUnderEqual19(student)) {
+			SubField subfield = subFieldMap.get("공학의이해");
+			List<CourseDto> courseList = subfield.getCourseList();
+			courseList.removeIf(this::isIntroductionToCS);
+		}
+
 		int count = getDragonballCount(subFieldMap);
 		int totalCredit = getTotalCreditFromSubField(subFieldList);
 
@@ -177,6 +183,15 @@ public class GraduationService {
 				String abeek = course.getAbeek();
 				SubField subField = subFieldMap.get(abeek);
 				takeCourse(course, subField);
+			}
+		}
+
+		if (isMajorCSAndOverEqual20(student)) {
+			SubField computer = new SubField("MSC전산", new ArrayList<>(), 0, false);
+			for (CourseDto course : takenCourses) {
+				if (isCPrpgramming(course) || isInformationSystem(course) || isOOP(course)) {
+					takeCourse(course, computer);
+				}
 			}
 		}
 
@@ -613,9 +628,14 @@ public class GraduationService {
 		subFields.put("MSC수학", math);
 		subFields.put("MSC과학", science);
 		subFields.put("MSC전산", computer);
-		if (isMajorCSAndUnder19(majorCode, enterYear)) {
+//		if (isMajorCSAndUnder19(majorCode, enterYear)) {
+//			subFields.remove("MSC전산");
+//		}
+
+		if (isMajorCS(majorCode)) {
 			subFields.remove("MSC전산");
 		}
+
 		return subFields;
 	}
 
@@ -752,6 +772,10 @@ public class GraduationService {
 		return majorCode.equals("CS") && enterYear <= 19;
 	}
 
+	private boolean isMajorCS(String majorCode) {
+		return majorCode.equals("CS");
+	}
+
 	private boolean isMajorInArt(StudentDto student) {
 		return student.getMajor().getCollege().equals("미술대학");
 	}
@@ -762,5 +786,29 @@ public class GraduationService {
 
 	private boolean isSpecializedElectiveRequired(StudentDto student) {
 		return student.getEnterYear() >= 19;
+	}
+
+	private boolean isCPrpgramming(CourseDto courseDto) {
+		return courseDto.getNumber().equals("101810");
+	}
+
+	private boolean isOOP(CourseDto courseDto) {
+		return courseDto.getNumber().equals("012305");
+	}
+
+	private boolean isInformationSystem(CourseDto courseDto) {
+		return courseDto.getNumber().equals("012304");
+	}
+
+	private boolean isMajorCSAndOverEqual20(StudentDto student) {
+		return student.getMajor().getCode().equals("CS") && student.getEnterYear() >= 20;
+	}
+
+	private boolean isMajorCSAndUnderEqual19(StudentDto student) {
+		return student.getMajor().getCode().equals("CS") && student.getEnterYear() <= 19;
+	}
+
+	private boolean isIntroductionToCS(CourseDto courseDto) {
+		return courseDto.getNumber().equals("004174");
 	}
 }
