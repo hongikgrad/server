@@ -32,15 +32,15 @@ public class Crawler {
     }
 
     public Map<String, String> getHeaders() {
-        return Map.of(
-                "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Content-Type", "application/x-www-form-urlencoded",
-                "Accept-Encoding", "gzip, deflate, br",
-                "Origin", "https://cn.hongik.ac.kr"
-        );
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+        headers.put("Content-Type", "application/x-www-form-urlencoded");
+        headers.put("Accept-Encoding", "gzip, deflate, br");
+        headers.put("Origin", "https://cn.hongik.ac.kr");
+        return headers;
     }
 
-    private Map<String, String> getHeaders(String referer) {
+    public Map<String, String> getHeaders(String referer) {
         Map<String, String> headers = getHeaders();
         headers.put("Referer", referer);
         return headers;
