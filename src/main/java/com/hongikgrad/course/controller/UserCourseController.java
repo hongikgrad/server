@@ -31,7 +31,21 @@ public class UserCourseController {
             Integer totalCount = userTakenCourses.size();
             return new ResponseEntity(new UserTakenCourseDto(totalCredit, totalCount, userTakenCourses), HttpStatus.OK);
         } catch(InvalidDocumentException e) {
+            e.printStackTrace();
             return new ResponseEntity(HttpStatus.NETWORK_AUTHENTICATION_REQUIRED);
+        } catch(Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/users/courses/v2")
+    public ResponseEntity userCoursePOSTV2(@RequestBody Map<String, String> request) {
+        try {
+            List<CourseDto> userTakenCourses = courseService.loadUserTakenCoursesV2(request);
+            Integer totalCredit = courseService.getUserTakenTotalCredit(userTakenCourses);
+            Integer totalCount = userTakenCourses.size();
+            return new ResponseEntity(new UserTakenCourseDto(totalCredit, totalCount, userTakenCourses), HttpStatus.OK);
         } catch(Exception e) {
             e.printStackTrace();
             return new ResponseEntity(HttpStatus.BAD_REQUEST);

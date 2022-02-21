@@ -41,6 +41,7 @@ public class CourseService {
 	private List<CourseDto> allCourses;
 
 	String TAKEN_COURSE_URL = "https://cn.hongik.ac.kr/stud/P/01000/01000.jsp";
+	String GRADUATION_URL = "https://cn.hongik.ac.kr/stud/E/04000/04010.jsp";
 
 	@PostConstruct
 	public void init() {
@@ -219,6 +220,46 @@ public class CourseService {
 		return getUserTakenCoursesFromClassnetV2(request);
 	}
 
+	public List<CourseDto> loadUserTakenCoursesV2(Map<String, String> request) throws InvalidDocumentException {
+		return getUserTakenCourseFromGraduationPage(request);
+	}
+
+	public List<CourseDto> getUserTakenCourseFromGraduationPage(Map<String, String> request) throws InvalidDocumentException {
+		List<CourseDto> courseDtoList = new ArrayList<>();
+		Map<String, String> data = Map.of(
+				"gubun", "1",
+				"dept", "A000"
+		);
+		Document userTakenCourseDocument = courseCrawler.getJsoupResponseDocument(GRADUATION_URL, request, courseCrawler.getHeaders("https://cn.hongik.ac.kr/stud/E/04000/04000.jsp"), data, Connection.Method.POST);
+		Element body = userTakenCourseDocument.getElementById("body");
+		Elements tableWrappers = body.child(2).children();
+
+		for (Element tableWrapper : tableWrappers) {
+			Elements tableElements = tableWrapper.children();
+			for (Element tableElement : tableElements) {
+				Element tableBody = tableElement.selectFirst("tbody");
+				if(tableBody == null) continue;
+				Elements tableRows = tableBody.children();
+				extractCourseData(tableRows, courseDtoList, 0, 3);
+			}
+		}
+		return courseDtoList;
+	}
+
+	private void extractCourseInfoFromTable(Elements tableElements) {
+		for (Element table : tableElements) {
+			Element tbody = table.selectFirst("tbody");
+			Elements tableRows = tbody.children();
+			for (Element tableRow : tableRows) {
+				int childrenSize = tableRow.childrenSize();
+				if(childrenSize >= 4) {
+					String courseNumber = tableRow.child(0).text();
+					String courseCredit = tableRow.child(3).text();
+				}
+			}
+		}
+	}
+
 	public List<CourseDto> getUserTakenCoursesFromClassnetV2(Map<String, String> request) throws InvalidDocumentException, InvalidCookieException {
 		List<CourseDto> courseDtoList = new ArrayList<>();
 		Document userTakenCourseDocument = courseCrawler.getJsoupResponseDocument(TAKEN_COURSE_URL, request, courseCrawler.getHeaders(), null, Connection.Method.POST);
@@ -380,6 +421,8 @@ public class CourseService {
 		}
 		return ret;
 	}
+
+
 
 //	private List<CourseDto> getMajorCourseList(Major major, int enterYear) {
 //		List<CourseDto> majorCourseList = majorHierarchyRepository.findAllMajorCoursesByMaster(major);
