@@ -215,13 +215,13 @@ public class CourseService {
 	}
 
 	/* 유저가 들은 수업들을 반환 */
-	public List<CourseDto> loadUserTakenCourses(HttpServletRequest request) throws InvalidCookieException, InvalidDocumentException {
+	public List<CourseDto> loadUserTakenCourses(Map<String, String> request) throws InvalidCookieException, InvalidDocumentException {
 		return getUserTakenCoursesFromClassnetV2(request);
 	}
 
-	public List<CourseDto> getUserTakenCoursesFromClassnetV2(HttpServletRequest request) throws InvalidDocumentException, InvalidCookieException {
+	public List<CourseDto> getUserTakenCoursesFromClassnetV2(Map<String, String> request) throws InvalidDocumentException, InvalidCookieException {
 		List<CourseDto> courseDtoList = new ArrayList<>();
-		Document userTakenCourseDocument = courseCrawler.getJsoupResponseDocument(TAKEN_COURSE_URL, extractCookie(request), courseCrawler.getHeaders(), null, Connection.Method.POST);
+		Document userTakenCourseDocument = courseCrawler.getJsoupResponseDocument(TAKEN_COURSE_URL, request, courseCrawler.getHeaders(), null, Connection.Method.POST);
 		Element body = userTakenCourseDocument.getElementById("body");
 		Elements semesterTableList = getValidTableElements(body);
 

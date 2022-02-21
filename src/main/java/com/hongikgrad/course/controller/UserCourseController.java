@@ -9,10 +9,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,7 +24,7 @@ public class UserCourseController {
 
     /* 유저가 들은 수업을 크롤링 한 뒤 응답 */
     @PostMapping("/users/courses")
-    public ResponseEntity userCoursesPOST(HttpServletRequest request) {
+    public ResponseEntity userCoursesPOST(@RequestBody Map<String, String> request) {
         try {
             List<CourseDto> userTakenCourses = courseService.loadUserTakenCourses(request);
             Integer totalCredit = courseService.getUserTakenTotalCredit(userTakenCourses);

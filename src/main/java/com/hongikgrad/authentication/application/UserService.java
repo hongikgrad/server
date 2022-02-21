@@ -22,6 +22,11 @@ public class UserService {
     private final UserCookieCrawler userCookieCrawler;
     private final CookieService cookieService;
 
+    public Map<String, String> loginV2(LoginRequestDto loginRequestDto) throws AuthenticationException, IOException, InvalidDocumentException {
+        Map<String, String> loginData = Map.of("USER_ID", loginRequestDto.getId(), "PASSWD", loginRequestDto.getPw());
+        return userCookieCrawler.getUserAuthCookie(loginData);
+    }
+
     public void login(LoginRequestDto loginDto, HttpServletResponse response) throws IOException, AuthenticationException, NoSuchAlgorithmException, InvalidDocumentException {
         Map<String, String> loginData = Map.of(
                 "USER_ID", loginDto.getId(),
